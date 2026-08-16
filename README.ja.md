@@ -45,8 +45,9 @@ skill-matrix/
 
 ### 前提条件
 - Node.js v20 LTS
-- Microsoft SQL Server (`localhost\SQLEXPRESS` または SQL Server 2019/2022)
-- Windows PowerShell
+- Node.js v20 LTS
+- Docker / Docker Desktop または PostgreSQL 16
+- Windows PowerShell / Bash
 
 ### 1. インストール
 ```powershell
@@ -56,15 +57,15 @@ npm install
 ```
 
 ### 2. 環境変数設定
-`.env.example` を `.env` にコピーし、SQL Server接続情報を設定：
+`.env.example` を `.env` にコピーし、PostgreSQL 接続情報を設定（Docker 利用時は自動設定）：
 ```env
-DATABASE_URL="sqlserver://localhost\\SQLEXPRESS;database=skillmatrix;integratedSecurity=true;trustServerCertificate=true;"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/skillmatrix?schema=public"
 SESSION_SECRET="your-super-secure-random-32-char-string"
 ```
 
 ### 3. DBマイグレーション & デモデータ投入
 ```powershell
-# 明示的DBマイグレーション実行
+# DBスキーマ反映
 npm run db:migrate
 
 # デモデータ (25名、3階層組織、スキル、資格、実務歴、評価履歴) 投入

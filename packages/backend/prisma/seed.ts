@@ -1,3 +1,4 @@
+import '../src/config/index.js';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { Role, EmployeeStatus, SkillLevel, EvaluationType } from '@skillmatrix/shared';

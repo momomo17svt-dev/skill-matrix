@@ -60,4 +60,4 @@ EXPOSE 3000
 
 USER node
 
-CMD ["node", "packages/backend/dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push --schema=./packages/backend/prisma/schema.prisma --skip-generate && node packages/backend/dist/index.js"]

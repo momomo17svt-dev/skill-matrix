@@ -61,7 +61,7 @@ skill-matrix/
 
 ### Prerequisites
 - Node.js v20 LTS
-- Microsoft SQL Server (e.g. `localhost\SQLEXPRESS` or SQL Server 2019/2022)
+- Docker / Docker Desktop or PostgreSQL 16
 - Windows PowerShell / Bash
 
 ### 1. Installation
@@ -75,15 +75,15 @@ npm install
 ```
 
 ### 2. Environment Configuration
-Copy `.env.example` to `.env` and configure your SQL Server connection string:
+Copy `.env.example` to `.env` and configure your PostgreSQL connection string:
 ```env
-DATABASE_URL="sqlserver://localhost\\SQLEXPRESS;database=skillmatrix;integratedSecurity=true;trustServerCertificate=true;"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/skillmatrix?schema=public"
 SESSION_SECRET="your-super-secure-random-32-char-string"
 ```
 
 ### 3. Database Migration & Seed
 ```powershell
-# Run Prisma migration (Explicit script)
+# Run Prisma migration
 npm run db:migrate
 
 # Seed demo dataset (25 employees, 3-tier org, skills, certs, work histories)

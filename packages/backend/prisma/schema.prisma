@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,7 @@ datasource db {
 model Department {
   id          String       @id @default(uuid()) @db.VarChar(36)
   code        String       @unique @db.VarChar(50)
-  name        String       @db.NVarChar(100)
+  name        String       @db.VarChar(100)
   parentId    String?      @db.VarChar(36)
   path        String       @db.VarChar(500) // 例: "/d1/d2/d3"
   level       Int          @default(1)
@@ -22,7 +22,7 @@ model Department {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   children    Department[] @relation("DepartmentHierarchy")
   employees   Employee[]
   categories  SkillCategory[]
@@ -39,19 +39,19 @@ model Department {
 model Employee {
   id             String       @id @default(uuid()) @db.VarChar(36)
   employeeNumber String       @unique @db.VarChar(50)
-  name           String       @db.NVarChar(100)
-  nameKana       String       @db.NVarChar(100)
+  name           String       @db.VarChar(100)
+  nameKana       String       @db.VarChar(100)
   email          String       @unique @db.VarChar(255)
   departmentId   String       @db.VarChar(36)
-  position       String?      @db.NVarChar(50)
+  position       String?      @db.VarChar(50)
   role           String       @default("GENERAL") @db.VarChar(20) // ADMIN, DEPARTMENT_MANAGER, GENERAL
   hireDate       DateTime     @db.Date
   status         String       @default("ACTIVE") @db.VarChar(20) // ACTIVE, ON_LEAVE, RETIRED
-  notes          String?      @db.NVarChar(Max)
+  notes          String?      @db.Text
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  department     Department   @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   account        Account?
   evaluations    SkillEvaluation[]
   evalHistories  SkillEvaluationHistory[] @relation("HistoryEmployee")
@@ -80,7 +80,7 @@ model Account {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
-  employee            Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee            Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   sessions            Session[]
   passwordHistories   PasswordHistory[]
 
@@ -93,11 +93,11 @@ model Session {
   tokenHash String   @unique @db.VarChar(64)
   expiresAt DateTime
   ipAddress String?  @db.VarChar(45)
-  userAgent String?  @db.NVarChar(500)
+  userAgent String?  @db.VarChar(500)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([tokenHash], map: "idx_sessions_tokenHash")
   @@index([expiresAt], map: "idx_sessions_expiresAt")
@@ -110,7 +110,7 @@ model PasswordHistory {
   passwordHash String   @db.VarChar(255)
   createdAt    DateTime @default(now())
 
-  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("password_histories")
 }
@@ -121,12 +121,12 @@ model PasswordHistory {
 model SkillCategory {
   id           String     @id @default(uuid()) @db.VarChar(36)
   departmentId String     @db.VarChar(36)
-  name         String     @db.NVarChar(100)
+  name         String     @db.VarChar(100)
   sortOrder    Int        @default(0)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   skills       Skill[]
 
   @@index([departmentId], map: "idx_skill_categories_departmentId")
@@ -137,14 +137,14 @@ model Skill {
   id           String            @id @default(uuid()) @db.VarChar(36)
   categoryId   String            @db.VarChar(36)
   departmentId String            @db.VarChar(36)
-  name         String            @db.NVarChar(100)
-  notes        String?           @db.NVarChar(500)
+  name         String            @db.VarChar(100)
+  notes        String?           @db.VarChar(500)
   sortOrder    Int               @default(0)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
-  category     SkillCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  department   Department        @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category     SkillCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  department   Department        @relation(fields: [departmentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   evaluations  SkillEvaluation[]
   histories    SkillEvaluationHistory[]
 
@@ -165,8 +165,8 @@ model SkillEvaluation {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  employee           Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skill              Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee           Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  skill              Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([employeeId, skillId], map: "uq_skill_evaluations_employee_skill")
   @@index([employeeId], map: "idx_skill_evaluations_employeeId")
@@ -184,11 +184,11 @@ model SkillEvaluationHistory {
   evalType      String   @db.VarChar(20) // SELF, MANAGER
   previousLevel String   @db.VarChar(20)
   newLevel      String   @db.VarChar(20)
-  reason        String?  @db.NVarChar(500)
+  reason        String?  @db.VarChar(500)
   createdAt     DateTime @default(now())
 
-  employee      Employee @relation("HistoryEmployee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee      Employee @relation("HistoryEmployee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([employeeId], map: "idx_eval_histories_employeeId")
   @@index([skillId], map: "idx_eval_histories_skillId")
@@ -200,9 +200,9 @@ model SkillEvaluationHistory {
 // -------------------------------------------------------------------
 model CertificationMaster {
   id            String                  @id @default(uuid()) @db.VarChar(36)
-  name          String                  @unique @db.NVarChar(100)
-  issuer        String?                 @db.NVarChar(100)
-  category      String?                 @db.NVarChar(50)
+  name          String                  @unique @db.VarChar(100)
+  issuer        String?                 @db.VarChar(100)
+  category      String?                 @db.VarChar(50)
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
 
@@ -215,16 +215,16 @@ model EmployeeCertification {
   id                      String                  @id @default(uuid()) @db.VarChar(36)
   employeeId              String                  @db.VarChar(36)
   certificationMasterId   String?                 @db.VarChar(36)
-  customCertificationName String?                 @db.NVarChar(100)
+  customCertificationName String?                 @db.VarChar(100)
   acquiredDate            DateTime                @db.Date
   expirationDate          DateTime?               @db.Date
-  certificateNumber       String?                 @db.NVarChar(100)
-  notes                   String?                 @db.NVarChar(1000)
+  certificateNumber       String?                 @db.VarChar(100)
+  notes                   String?                 @db.VarChar(1000)
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
 
-  employee                Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  master                  CertificationMaster?    @relation(fields: [certificationMasterId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  employee                Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  master                  CertificationMaster?    @relation(fields: [certificationMasterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   attachment              CertificationAttachment?
 
   @@index([employeeId], map: "idx_emp_certs_employeeId")
@@ -234,15 +234,15 @@ model EmployeeCertification {
 model CertificationAttachment {
   id                      String                @id @default(uuid()) @db.VarChar(36)
   employeeCertificationId String                @unique @db.VarChar(36)
-  originalFileName        String                @db.NVarChar(255)
+  originalFileName        String                @db.VarChar(255)
   storedFileName          String                @db.VarChar(255) // UUID.ext
-  filePath                String                @db.NVarChar(500)
+  filePath                String                @db.VarChar(500)
   fileSize                Int
   mimeType                String                @db.VarChar(100)
   sha256Hash              String                @db.VarChar(64)
   createdAt               DateTime              @default(now())
 
-  certification           EmployeeCertification @relation(fields: [employeeCertificationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  certification           EmployeeCertification @relation(fields: [employeeCertificationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("certification_attachments")
 }
@@ -253,17 +253,17 @@ model CertificationAttachment {
 model WorkHistory {
   id             String             @id @default(uuid()) @db.VarChar(36)
   employeeId     String             @db.VarChar(36)
-  projectName    String             @db.NVarChar(150)
-  description    String?            @db.NVarChar(Max)
-  role           String?            @db.NVarChar(100)
+  projectName    String             @db.VarChar(150)
+  description    String?            @db.Text
+  role           String?            @db.VarChar(100)
   startYearMonth String             @db.VarChar(7) // "YYYY-MM"
   endYearMonth   String?            @db.VarChar(7) // "YYYY-MM"
   isCurrent      Boolean            @default(false)
-  notes          String?            @db.NVarChar(1000)
+  notes          String?            @db.VarChar(1000)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
-  employee       Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee       Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   skills         WorkHistorySkill[]
 
   @@index([employeeId], map: "idx_work_histories_employeeId")
@@ -273,11 +273,11 @@ model WorkHistory {
 model WorkHistorySkill {
   id            String      @id @default(uuid()) @db.VarChar(36)
   workHistoryId String      @db.VarChar(36)
-  skillName     String      @db.NVarChar(100)
-  category      String?     @db.NVarChar(50)
+  skillName     String      @db.VarChar(100)
+  category      String?     @db.VarChar(50)
   createdAt     DateTime    @default(now())
 
-  workHistory   WorkHistory @relation(fields: [workHistoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workHistory   WorkHistory @relation(fields: [workHistoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([workHistoryId], map: "idx_work_skills_workHistoryId")
   @@index([skillName], map: "idx_work_skills_skillName")
@@ -291,14 +291,14 @@ model AuditLog {
   id                   String   @id @default(uuid()) @db.VarChar(36)
   timestamp            DateTime @default(now())
   actorId              String   @db.VarChar(36)
-  actorName            String   @db.NVarChar(100)
+  actorName            String   @db.VarChar(100)
   action               String   @db.VarChar(50)
   targetType           String   @db.VarChar(50)
   targetId             String   @db.VarChar(36)
   targetEmployeeNumber String?  @db.VarChar(50)
-  targetName           String?  @db.NVarChar(100)
-  beforeJson           String?  @db.NVarChar(Max)
-  afterJson            String?  @db.NVarChar(Max)
+  targetName           String?  @db.VarChar(100)
+  beforeJson           String?  @db.Text
+  afterJson            String?  @db.Text
   ipAddress            String?  @db.VarChar(45)
   requestId            String?  @db.VarChar(36)
 
