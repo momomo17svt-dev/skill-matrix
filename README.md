@@ -102,10 +102,29 @@ Open `http://localhost:5173` in your browser.
 
 Run the full-stack application (Backend API + Frontend SPA on port `3000`) inside a single lightweight container:
 
-#### Build & Start with Docker Compose:
+#### Pattern A: Build from Source & Start:
 ```bash
 docker compose -f docker/docker-compose.yml up -d --build
 ```
+
+#### Pattern B: Load from Offline tar Archive & Start:
+```bash
+# 1. Load the pre-built image
+# [Windows PowerShell]
+powershell -ExecutionPolicy Bypass -File .\docker\load-images.ps1
+# [Linux / Bash]
+bash docker/load-images.sh
+
+# Or directly using Docker CLI:
+docker load -i images/skillmatrix-offline-image.tar
+
+# 2. Launch container (Zero external pull)
+docker compose -f docker/docker-compose.yml up -d
+```
+
+---
+
+#### Access Application:
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 #### Stop Container:

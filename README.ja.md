@@ -83,11 +83,29 @@ npm run dev
 
 Docker Desktop または Docker Engine が動作している環境では、コンテナ単体でバックエンドAPIおよびフロントエンドSPA画面（ポート `3000`）を起動できます。
 
-#### 通常起動 (イメージビルド & 起動):
+#### パターン A: 通常起動 (ソースコードからビルドして起動)
 ```bash
 # Docker Compose でビルド & バックグラウンド起動
 docker compose -f docker/docker-compose.yml up -d --build
 ```
+
+#### パターン B: オフライン起動 (tar アーカイブからロードして起動)
+事前に生成された `images/skillmatrix-offline-image.tar` を読み込んで起動する場合：
+```bash
+# 1. イメージのロード
+# [Windows PowerShell の場合]
+powershell -ExecutionPolicy Bypass -File .\docker\load-images.ps1
+# [Linux / Bash の場合]
+bash docker/load-images.sh
+
+# 2. コンテナ起動 (外部Pullなし)
+docker compose -f docker/docker-compose.yml up -d
+```
+※ 手動でロードする場合は直接 `docker load -i images/skillmatrix-offline-image.tar` を実行してください。
+
+---
+
+#### アクセス先
 ブラウザで **[http://localhost:3000](http://localhost:3000)** にアクセスします。
 
 #### 停止コマンド:
