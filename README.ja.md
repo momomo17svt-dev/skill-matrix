@@ -71,11 +71,29 @@ npm run db:migrate
 npm run db:seed
 ```
 
-### 4. 開発サーバー起動
+### 4. 開発サーバー起動 (ローカル Node.js 実行)
 ```powershell
 npm run dev
 ```
 ブラウザで `http://localhost:5173` にアクセスします。
+
+---
+
+### 🐳 Docker による起動方法 (コンテナ単体 / 本番モード)
+
+Docker Desktop または Docker Engine が動作している環境では、コンテナ単体でバックエンドAPIおよびフロントエンドSPA画面（ポート `3000`）を起動できます。
+
+#### 通常起動 (イメージビルド & 起動):
+```bash
+# Docker Compose でビルド & バックグラウンド起動
+docker compose -f docker/docker-compose.yml up -d --build
+```
+ブラウザで **[http://localhost:3000](http://localhost:3000)** にアクセスします。
+
+#### 停止コマンド:
+```bash
+docker compose -f docker/docker-compose.yml down
+```
 
 #### デモ用初期アカウント:
 - **システム管理者 (ADMIN)**: `admin` / `Password123!`
@@ -99,10 +117,41 @@ npm run verify:offline
 
 ---
 
-## 📦 オフラインデプロイ手順
+## 📦 オフラインデプロイ手順 (閉域網・完全オフライン環境)
 
-### Windows 環境 (PowerShell / Windows Service)
-1. インターネット接続環境でオフライン配布用ZIPを生成：
+### 1. Docker 環境でのオフライン起動 (Ubuntu / Linux / Windows Docker)
+
+#### 事前準備 (インターネット接続環境):
+```bash
+# Linux / macOS
+bash docker/save-images.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\docker\save-images.ps1
+```
+`images/skillmatrix-offline-image.tar`（約 112 MB）が生成されます。
+
+#### 閉域オフライン環境での起動:
+1. `images/skillmatrix-offline-image.tar`、`docker/docker-compose.yml`、`.env.example` を閉域サーバーへ持ち込みます。
+2. 以下の手順でイメージを読み込み、コンテナを起動します：
+
+```bash
+# [Linux の場合]
+bash docker/load-images.sh
+cp .env.example .env
+docker compose -f docker/docker-compose.yml up -d
+
+# [Windows PowerShell の場合]
+powershell -ExecutionPolicy Bypass -File .\docker\load-images.ps1
+Copy-Item .env.example .env
+docker compose -f docker/docker-compose.yml up -d
+```
+起動後、ブラウザで **`http://<サーバーIPまたはlocalhost>:3000`** にアクセスします。
+
+---
+
+### 2. Windows サービス環境 (PowerShell / Windows Task Scheduler)
+1. インターネット接続環境でスタンドアロン配布用ZIPを生成：
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\scripts\bundle-offline-windows.ps1
    ```
@@ -112,20 +161,6 @@ npm run verify:offline
    powershell -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
    powershell -ExecutionPolicy Bypass -File .\scripts\service-install.ps1
    powershell -ExecutionPolicy Bypass -File .\scripts\service-start.ps1
-   ```
-
-### Ubuntu / Linux 環境 (Docker Compose オフライン)
-1. インターネット接続環境でイメージをビルドし tar 保存：
-   ```bash
-   bash docker/save-images.sh
-   ```
-2. `skillmatrix-offline-image.tar`, `docker/docker-compose.yml`, `.env.example` を閉域環境へ持ち込む。
-3. 以下のコマンドで起動：
-   ```bash
-   bash docker/load-images.sh
-   cp .env.example .env && nano .env
-   bash docker/migrate.sh
-   docker compose -f docker/docker-compose.yml up -d
    ```
 
 ---

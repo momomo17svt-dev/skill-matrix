@@ -90,11 +90,28 @@ npm run db:migrate
 npm run db:seed
 ```
 
-### 4. Start Development Server
+### 4. Start Development Server (Local Node.js)
 ```powershell
 npm run dev
 ```
 Open `http://localhost:5173` in your browser.
+
+---
+
+### 🐳 Quick Start with Docker (Standalone Container / Production Mode)
+
+Run the full-stack application (Backend API + Frontend SPA on port `3000`) inside a single lightweight container:
+
+#### Build & Start with Docker Compose:
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+#### Stop Container:
+```bash
+docker compose -f docker/docker-compose.yml down
+```
 
 #### Default Demo Accounts:
 - **Administrator**: `admin` / `Password123!`
@@ -118,9 +135,40 @@ npm run verify:offline
 
 ---
 
-## 📦 Offline Deployment
+## 📦 Offline Deployment (Isolated / Air-gapped Environments)
 
-### Windows Deployment (PowerShell Service)
+### 1. Docker Offline Deployment (Ubuntu / Linux / Windows Docker)
+
+#### Preparation (On Internet-Connected Host):
+```bash
+# Linux / macOS
+bash docker/save-images.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\docker\save-images.ps1
+```
+This generates `images/skillmatrix-offline-image.tar` (~112 MB).
+
+#### Launching in Isolated Offline Environment:
+1. Transfer `images/skillmatrix-offline-image.tar`, `docker/docker-compose.yml`, and `.env.example` to the target host.
+2. Load the archive and launch:
+
+```bash
+# Linux / Bash
+bash docker/load-images.sh
+cp .env.example .env
+docker compose -f docker/docker-compose.yml up -d
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File .\docker\load-images.ps1
+Copy-Item .env.example .env
+docker compose -f docker/docker-compose.yml up -d
+```
+Access the application at **`http://<server-ip-or-localhost>:3000`**.
+
+---
+
+### 2. Windows Service Deployment (PowerShell Service)
 1. Generate the standalone offline ZIP package on a machine with internet:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\scripts\bundle-offline-windows.ps1
@@ -132,20 +180,6 @@ npm run verify:offline
    powershell -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
    powershell -ExecutionPolicy Bypass -File .\scripts\service-install.ps1
    powershell -ExecutionPolicy Bypass -File .\scripts\service-start.ps1
-   ```
-
-### Ubuntu / Linux Deployment (Docker Compose Offline)
-1. On an internet-connected host, build and save the offline container image:
-   ```bash
-   bash docker/save-images.sh
-   ```
-2. Copy `skillmatrix-offline-image.tar`, `docker/docker-compose.yml`, and `.env.example` to the target offline server.
-3. Load the image and launch the container:
-   ```bash
-   bash docker/load-images.sh
-   cp .env.example .env && nano .env
-   bash docker/migrate.sh
-   docker compose -f docker/docker-compose.yml up -d
    ```
 
 ---
