@@ -113,6 +113,17 @@ docker compose -f docker/docker-compose.yml up -d
 docker compose -f docker/docker-compose.yml down
 ```
 
+---
+
+### 🗄️ SQL Server (データベース) の構成について
+
+本システムでは、環境に合わせて以下の **2 つの DB 構成** に対応しています：
+
+| 構成パターン | 想定環境 | 概要・起動方法 |
+| :--- | :--- | :--- |
+| **パターン 1: 既存 / ホスト SQL Server 連携**<br>*(デフォルト)* | Windows ホストに `SQLEXPRESS` がある場合、または社内の共有 SQL Server を利用する場合 | `docker-compose.yml` でアプリコンテナのみを起動し、ホスト側（または外部）の SQL Server に接続します。<br>`docker compose -f docker/docker-compose.yml up -d` |
+| **パターン 2: All-in-One Docker 構成**<br>*(DB も Docker で起動)* | ホストマシンに SQL Server をインストールしていない場合（Linux サーバーやクリーンな検証環境など） | SQL Server コンテナ（`mssql/server:2022`）とアプリコンテナをまとめて Docker 上で起動します。<br>`docker compose -f docker/docker-compose.with-db.yml up -d` |
+
 #### デモ用初期アカウント:
 - **システム管理者 (ADMIN)**: `admin` / `Password123!`
 - **第1開発部長 (MANAGER)**: `takahashi.i` / `Password123!`

@@ -132,6 +132,17 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 docker compose -f docker/docker-compose.yml down
 ```
 
+---
+
+### 🗄️ SQL Server Database Deployment Options
+
+SkillMatrix supports **two database deployment models**:
+
+| Pattern | Use Case | Command |
+| :--- | :--- | :--- |
+| **Option 1: External / Host SQL Server**<br>*(Default)* | Connect to Windows `localhost\SQLEXPRESS` or enterprise shared SQL Server | `docker compose -f docker/docker-compose.yml up -d` |
+| **Option 2: All-in-One Docker Stack**<br>*(SQL Server container included)* | When host has no SQL Server installed (Linux servers, isolated test environments) | `docker compose -f docker/docker-compose.with-db.yml up -d` |
+
 #### Default Demo Accounts:
 - **Administrator**: `admin` / `Password123!`
 - **Department Manager**: `takahashi.i` / `Password123!`
