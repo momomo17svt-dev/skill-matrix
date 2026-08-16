@@ -4,14 +4,21 @@ services:
     container_name: skillmatrix_app
     pull_policy: never  # オフライン環境での外部Pullを完全禁止
     restart: always
+    env_file:
+      - path: ../.env
+        required: false
+      - path: .env
+        required: false
     ports:
       - "${PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - HOST=0.0.0.0
-      - DATABASE_URL=${DATABASE_URL}
-      - SESSION_SECRET=${SESSION_SECRET}
+      - DATABASE_URL=${DATABASE_URL:-sqlserver://host.docker.internal;instanceName=SQLEXPRESS;database=skillmatrix;integratedSecurity=true;trustServerCertificate=true;}
+      - SESSION_SECRET=${SESSION_SECRET:-skillmatrix-prod-session-secret-key-32chars!!}
       - UPLOAD_DIR=/app/uploads
       - COOKIE_SECURE=false
     volumes:

@@ -65,9 +65,11 @@ export function createApp() {
 
   // 3. フロントエンド静的配信 (Docker/Production環境)
   const frontendDistCandidates = [
-    path.resolve(process.cwd(), '../frontend/dist'),
     path.resolve(process.cwd(), 'packages/frontend/dist'),
-    path.resolve(__dirname, '../../frontend/dist')
+    path.resolve(process.cwd(), '../frontend/dist'),
+    path.resolve(__dirname, '../../frontend/dist'),
+    path.resolve(__dirname, '../../../frontend/dist'),
+    '/app/packages/frontend/dist'
   ];
 
   let frontendDistPath: string | null = null;
@@ -79,16 +81,22 @@ export function createApp() {
   }
 
   if (frontendDistPath) {
-    app.use('/*', serveStatic({ root: path.relative(process.cwd(), frontendDistPath) }));
-    // SPA フォールバック (非APIルートで404の場合は index.html を返却)
-    app.get('*', (c) => {
-      const indexPath = path.join(frontendDistPath!, 'index.html');
+    const distRoot = frontendDistPath;
+    app.use('/assets/*', serveStatic({ root: path.relative(process.cwd(), distRoot) }));
+    app.use('/favicon.ico', serveStatic({ path: path.join(path.relative(process.cwd(), distRoot), 'favicon.ico') }));
+    
+    // SPA 配信
+    const serveIndex = (c: any) => {
+      const indexPath = path.join(distRoot, 'index.html');
       if (fs.existsSync(indexPath)) {
         const html = fs.readFileSync(indexPath, 'utf-8');
         return c.html(html);
       }
       return c.notFound();
-    });
+    };
+
+    app.get('/', serveIndex);
+    app.get('*', serveIndex);
   }
 
   // 4. グローバルエラーハンドリング

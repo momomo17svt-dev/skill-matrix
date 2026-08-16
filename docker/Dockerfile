@@ -7,6 +7,8 @@
 # -------------------------------------------------------------------
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 # パッケージ定義のコピー
@@ -33,6 +35,8 @@ RUN npm run build --workspace=packages/frontend
 # Stage 2: Production Runtime
 # -------------------------------------------------------------------
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 

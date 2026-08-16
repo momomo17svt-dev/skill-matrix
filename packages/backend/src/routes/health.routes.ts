@@ -5,14 +5,17 @@ import { AppEnv } from '../types/index.js';
 
 export const healthRoutes = new Hono<AppEnv>();
 
-// ルート情報
-healthRoutes.get('/', (c) => {
+// ルート情報 (JSONリクエスト時のみAPI情報を返却。ブラウザアクセス時はSPA配信へフォールバック)
+healthRoutes.get('/', (c, next) => {
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html')) {
+    return next();
+  }
   return c.json({
     app: 'SkillMatrix API Server',
     version: '1.0.0',
     status: 'running',
     docs: '/api/v1',
-    frontend: 'http://localhost:5173',
     endpoints: {
       health: '/health',
       ready: '/ready',
