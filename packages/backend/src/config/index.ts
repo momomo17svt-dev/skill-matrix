@@ -1,7 +1,28 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const candidatePaths = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), '../../.env'),
+  path.resolve(__dirname, '../../../.env'),
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(__dirname, '../.env')
+];
+
+for (const envPath of candidatePaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
+
+// デフォルトフォールバック
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'sqlserver://localhost;instanceName=SQLEXPRESS;database=skillmatrix;integratedSecurity=true;trustServerCertificate=true;';
+}
 
 export const config = {
   env: process.env.NODE_ENV || 'development',

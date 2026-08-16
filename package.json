@@ -6,7 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --parallel",
+    "dev": "npm run dev --workspace=packages/backend --workspace=packages/frontend --parallel",
+    "dev:backend": "npm run dev --workspace=packages/backend",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:unit": "npm run test:unit --workspace=packages/shared --workspace=packages/backend",

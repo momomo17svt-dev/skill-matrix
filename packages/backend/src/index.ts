@@ -1,3 +1,4 @@
+import './config/index.js';
 import { serve } from '@hono/node-server';
 import { createApp } from './app.js';
 import { config } from './config/index.js';
