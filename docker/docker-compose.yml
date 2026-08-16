@@ -1,0 +1,28 @@
+services:
+  app:
+    image: skillmatrix-app:latest
+    container_name: skillmatrix_app
+    pull_policy: never  # オフライン環境での外部Pullを完全禁止
+    restart: always
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - UPLOAD_DIR=/app/uploads
+      - COOKIE_SECURE=false
+    volumes:
+      - skillmatrix_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  skillmatrix_uploads:
+    driver: local

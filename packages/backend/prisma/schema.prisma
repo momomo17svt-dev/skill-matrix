@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------------
+// 組織・部署 (Departments)
+// -------------------------------------------------------------------
+model Department {
+  id          String       @id @default(uuid()) @db.VarChar(36)
+  code        String       @unique @db.VarChar(50)
+  name        String       @db.NVarChar(100)
+  parentId    String?      @db.VarChar(36)
+  path        String       @db.VarChar(500) // 例: "/d1/d2/d3"
+  level       Int          @default(1)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children    Department[] @relation("DepartmentHierarchy")
+  employees   Employee[]
+  categories  SkillCategory[]
+  skills      Skill[]
+
+  @@index([parentId], map: "idx_departments_parentId")
+  @@index([path], map: "idx_departments_path")
+  @@map("departments")
+}
+
+// -------------------------------------------------------------------
+// 社員基本情報 (Employees)
+// -------------------------------------------------------------------
+model Employee {
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  employeeNumber String       @unique @db.VarChar(50)
+  name           String       @db.NVarChar(100)
+  nameKana       String       @db.NVarChar(100)
+  email          String       @unique @db.VarChar(255)
+  departmentId   String       @db.VarChar(36)
+  position       String?      @db.NVarChar(50)
+  role           String       @default("GENERAL") @db.VarChar(20) // ADMIN, DEPARTMENT_MANAGER, GENERAL
+  hireDate       DateTime     @db.Date
+  status         String       @default("ACTIVE") @db.VarChar(20) // ACTIVE, ON_LEAVE, RETIRED
+  notes          String?      @db.NVarChar(Max)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account        Account?
+  evaluations    SkillEvaluation[]
+  evalHistories  SkillEvaluationHistory[] @relation("HistoryEmployee")
+  certifications EmployeeCertification[]
+  workHistories  WorkHistory[]
+
+  @@index([departmentId], map: "idx_employees_departmentId")
+  @@index([role], map: "idx_employees_role")
+  @@index([name], map: "idx_employees_name")
+  @@index([status], map: "idx_employees_status")
+  @@map("employees")
+}
+
+// -------------------------------------------------------------------
+// アカウント & 認証 (Accounts, Sessions, PasswordHistories)
+// -------------------------------------------------------------------
+model Account {
+  id                  String            @id @default(uuid()) @db.VarChar(36)
+  employeeId          String            @unique @db.VarChar(36)
+  loginId             String            @unique @db.VarChar(50)
+  passwordHash        String            @db.VarChar(255)
+  isInitialPassword   Boolean           @default(true)
+  failedLoginAttempts Int               @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  employee            Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sessions            Session[]
+  passwordHistories   PasswordHistory[]
+
+  @@map("accounts")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  accountId String   @db.VarChar(36)
+  tokenHash String   @unique @db.VarChar(64)
+  expiresAt DateTime
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.NVarChar(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([tokenHash], map: "idx_sessions_tokenHash")
+  @@index([expiresAt], map: "idx_sessions_expiresAt")
+  @@map("sessions")
+}
+
+model PasswordHistory {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  accountId    String   @db.VarChar(36)
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("password_histories")
+}
+
+// -------------------------------------------------------------------
+// スキル定義 & 評価 (SkillCategories, Skills, Evaluations)
+// -------------------------------------------------------------------
+model SkillCategory {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  departmentId String     @db.VarChar(36)
+  name         String     @db.NVarChar(100)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills       Skill[]
+
+  @@index([departmentId], map: "idx_skill_categories_departmentId")
+  @@map("skill_categories")
+}
+
+model Skill {
+  id           String            @id @default(uuid()) @db.VarChar(36)
+  categoryId   String            @db.VarChar(36)
+  departmentId String            @db.VarChar(36)
+  name         String            @db.NVarChar(100)
+  notes        String?           @db.NVarChar(500)
+  sortOrder    Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  category     SkillCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  department   Department        @relation(fields: [departmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evaluations  SkillEvaluation[]
+  histories    SkillEvaluationHistory[]
+
+  @@index([departmentId], map: "idx_skills_departmentId")
+  @@index([categoryId], map: "idx_skills_categoryId")
+  @@map("skills")
+}
+
+model SkillEvaluation {
+  id                 String     @id @default(uuid()) @db.VarChar(36)
+  employeeId         String     @db.VarChar(36)
+  skillId            String     @db.VarChar(36)
+  selfLevel          String     @default("UNEVALUATED") @db.VarChar(20) // A, B, C, UNEVALUATED
+  managerLevel       String     @default("UNEVALUATED") @db.VarChar(20) // A, B, C, UNEVALUATED
+  selfEvaluatedAt    DateTime?
+  managerEvaluatedAt DateTime?
+  managerEvaluatorId String?    @db.VarChar(36)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  employee           Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill              Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([employeeId, skillId], map: "uq_skill_evaluations_employee_skill")
+  @@index([employeeId], map: "idx_skill_evaluations_employeeId")
+  @@index([skillId], map: "idx_skill_evaluations_skillId")
+  @@map("skill_evaluations")
+}
+
+model SkillEvaluationHistory {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  evaluationId  String   @db.VarChar(36)
+  employeeId    String   @db.VarChar(36)
+  skillId       String   @db.VarChar(36)
+  evaluatorId   String   @db.VarChar(36)
+  evaluatorRole String   @db.VarChar(20)
+  evalType      String   @db.VarChar(20) // SELF, MANAGER
+  previousLevel String   @db.VarChar(20)
+  newLevel      String   @db.VarChar(20)
+  reason        String?  @db.NVarChar(500)
+  createdAt     DateTime @default(now())
+
+  employee      Employee @relation("HistoryEmployee", fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([employeeId], map: "idx_eval_histories_employeeId")
+  @@index([skillId], map: "idx_eval_histories_skillId")
+  @@map("skill_evaluation_histories")
+}
+
+// -------------------------------------------------------------------
+// 資格マスタ & 保有資格 & 添付ファイル (Certifications & Attachments)
+// -------------------------------------------------------------------
+model CertificationMaster {
+  id            String                  @id @default(uuid()) @db.VarChar(36)
+  name          String                  @unique @db.NVarChar(100)
+  issuer        String?                 @db.NVarChar(100)
+  category      String?                 @db.NVarChar(50)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  certifications EmployeeCertification[]
+
+  @@map("certification_masters")
+}
+
+model EmployeeCertification {
+  id                      String                  @id @default(uuid()) @db.VarChar(36)
+  employeeId              String                  @db.VarChar(36)
+  certificationMasterId   String?                 @db.VarChar(36)
+  customCertificationName String?                 @db.NVarChar(100)
+  acquiredDate            DateTime                @db.Date
+  expirationDate          DateTime?               @db.Date
+  certificateNumber       String?                 @db.NVarChar(100)
+  notes                   String?                 @db.NVarChar(1000)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  employee                Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  master                  CertificationMaster?    @relation(fields: [certificationMasterId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  attachment              CertificationAttachment?
+
+  @@index([employeeId], map: "idx_emp_certs_employeeId")
+  @@map("employee_certifications")
+}
+
+model CertificationAttachment {
+  id                      String                @id @default(uuid()) @db.VarChar(36)
+  employeeCertificationId String                @unique @db.VarChar(36)
+  originalFileName        String                @db.NVarChar(255)
+  storedFileName          String                @db.VarChar(255) // UUID.ext
+  filePath                String                @db.NVarChar(500)
+  fileSize                Int
+  mimeType                String                @db.VarChar(100)
+  sha256Hash              String                @db.VarChar(64)
+  createdAt               DateTime              @default(now())
+
+  certification           EmployeeCertification @relation(fields: [employeeCertificationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("certification_attachments")
+}
+
+// -------------------------------------------------------------------
+// 実務経歴 & 使用技術 (WorkHistories & Skills)
+// -------------------------------------------------------------------
+model WorkHistory {
+  id             String             @id @default(uuid()) @db.VarChar(36)
+  employeeId     String             @db.VarChar(36)
+  projectName    String             @db.NVarChar(150)
+  description    String?            @db.NVarChar(Max)
+  role           String?            @db.NVarChar(100)
+  startYearMonth String             @db.VarChar(7) // "YYYY-MM"
+  endYearMonth   String?            @db.VarChar(7) // "YYYY-MM"
+  isCurrent      Boolean            @default(false)
+  notes          String?            @db.NVarChar(1000)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  employee       Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills         WorkHistorySkill[]
+
+  @@index([employeeId], map: "idx_work_histories_employeeId")
+  @@map("work_histories")
+}
+
+model WorkHistorySkill {
+  id            String      @id @default(uuid()) @db.VarChar(36)
+  workHistoryId String      @db.VarChar(36)
+  skillName     String      @db.NVarChar(100)
+  category      String?     @db.NVarChar(50)
+  createdAt     DateTime    @default(now())
+
+  workHistory   WorkHistory @relation(fields: [workHistoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([workHistoryId], map: "idx_work_skills_workHistoryId")
+  @@index([skillName], map: "idx_work_skills_skillName")
+  @@map("work_history_skills")
+}
+
+// -------------------------------------------------------------------
+// 監査ログ (AuditLogs: 不変・物理削除対象外)
+// -------------------------------------------------------------------
+model AuditLog {
+  id                   String   @id @default(uuid()) @db.VarChar(36)
+  timestamp            DateTime @default(now())
+  actorId              String   @db.VarChar(36)
+  actorName            String   @db.NVarChar(100)
+  action               String   @db.VarChar(50)
+  targetType           String   @db.VarChar(50)
+  targetId             String   @db.VarChar(36)
+  targetEmployeeNumber String?  @db.VarChar(50)
+  targetName           String?  @db.NVarChar(100)
+  beforeJson           String?  @db.NVarChar(Max)
+  afterJson            String?  @db.NVarChar(Max)
+  ipAddress            String?  @db.VarChar(45)
+  requestId            String?  @db.VarChar(36)
+
+  @@index([timestamp(sort: Desc)], map: "idx_audit_logs_timestamp")
+  @@index([actorId], map: "idx_audit_logs_actorId")
+  @@index([targetId], map: "idx_audit_logs_targetId")
+  @@map("audit_logs")
+}

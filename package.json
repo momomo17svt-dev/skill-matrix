@@ -1,0 +1,24 @@
+{
+  "name": "skill-matrix-root",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --parallel",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "test:unit": "npm run test:unit --workspace=packages/shared --workspace=packages/backend",
+    "test:integration": "npm run test:integration --workspace=packages/backend",
+    "test:e2e": "playwright test",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces",
+    "db:migrate": "npm run db:migrate --workspace=packages/backend",
+    "db:seed": "npm run db:seed --workspace=packages/backend",
+    "verify:offline": "node scripts/verify-offline.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

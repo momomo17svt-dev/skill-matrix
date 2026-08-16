@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "post_save": [
+      {
+        "pattern": "**/*.{ts,tsx}",
+        "command": "npm run typecheck"
+      }
+    ]
+  }
+}
