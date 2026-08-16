@@ -2,13 +2,17 @@
 # SkillMatrix Docker Offline Image Loader (PowerShell)
 # ===================================================================
 
-$TarFile = "skillmatrix-offline-image.tar"
-if (-not (Test-Path $TarFile)) {
-    Write-Error "ERROR: $TarFile not found in current directory!"
+$TarPath = "images\skillmatrix-offline-image.tar"
+if (-not (Test-Path $TarPath)) {
+    $TarPath = "skillmatrix-offline-image.tar"
 }
 
-Write-Host "Loading SkillMatrix Docker image from tar file..." -ForegroundColor Cyan
-docker load -i $TarFile
+if (-not (Test-Path $TarPath)) {
+    Write-Error "ERROR: skillmatrix-offline-image.tar was not found in ./images/ or current directory!"
+}
+
+Write-Host "Loading SkillMatrix Docker image from $TarPath..." -ForegroundColor Cyan
+docker load -i $TarPath
 
 Write-Host "Image successfully loaded! You can now start the application via:" -ForegroundColor Green
 Write-Host "  docker compose -f docker/docker-compose.yml up -d"

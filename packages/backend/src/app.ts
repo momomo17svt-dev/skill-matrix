@@ -17,8 +17,15 @@ import { workHistoryRoutes } from './routes/workHistory.routes.js';
 import { searchRoutes } from './routes/search.routes.js';
 import { dashboardRoutes } from './routes/dashboard.routes.js';
 import { auditRoutes } from './routes/audit.routes.js';
-
 import { AppEnv } from './types/index.js';
+
+import { serveStatic } from '@hono/node-server/serve-static';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function createApp() {
   const app = new Hono<AppEnv>();
@@ -56,7 +63,35 @@ export function createApp() {
   app.route('/api/v1/dashboard', dashboardRoutes);
   app.route('/api/v1/audit-logs', auditRoutes);
 
-  // 3. グローバルエラーハンドリング
+  // 3. フロントエンド静的配信 (Docker/Production環境)
+  const frontendDistCandidates = [
+    path.resolve(process.cwd(), '../frontend/dist'),
+    path.resolve(process.cwd(), 'packages/frontend/dist'),
+    path.resolve(__dirname, '../../frontend/dist')
+  ];
+
+  let frontendDistPath: string | null = null;
+  for (const candidate of frontendDistCandidates) {
+    if (fs.existsSync(candidate)) {
+      frontendDistPath = candidate;
+      break;
+    }
+  }
+
+  if (frontendDistPath) {
+    app.use('/*', serveStatic({ root: path.relative(process.cwd(), frontendDistPath) }));
+    // SPA フォールバック (非APIルートで404の場合は index.html を返却)
+    app.get('*', (c) => {
+      const indexPath = path.join(frontendDistPath!, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        const html = fs.readFileSync(indexPath, 'utf-8');
+        return c.html(html);
+      }
+      return c.notFound();
+    });
+  }
+
+  // 4. グローバルエラーハンドリング
   app.onError(errorHandler);
 
   return app;
