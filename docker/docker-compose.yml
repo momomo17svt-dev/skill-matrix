@@ -32,7 +32,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3005}:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000

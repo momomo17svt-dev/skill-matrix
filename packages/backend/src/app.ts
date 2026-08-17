@@ -35,11 +35,22 @@ export function createApp() {
   app.use('*', loggerMiddleware());
   app.use('*', securityHeaders());
 
-  // CORS設定 (開発/本番)
+  // CORS設定 (開発/本番・任意のポートおよび同一オリジンに対応)
   app.use(
     '*',
     cors({
-      origin: [config.clientOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'],
+      origin: (origin, c) => {
+        if (!origin) return '*';
+        // 同一オリジンまたはローカルホスト（ポート不問）を許可
+        if (
+          origin.startsWith('http://localhost') ||
+          origin.startsWith('http://127.0.0.1') ||
+          origin === config.clientOrigin
+        ) {
+          return origin;
+        }
+        return config.clientOrigin;
+      },
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-CSRF-Token'],
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
