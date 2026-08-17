@@ -1,3 +1,5 @@
+name: skill-matrix
+
 services:
   db:
     image: postgres:16-alpine
