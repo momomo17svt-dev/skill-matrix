@@ -8,7 +8,7 @@ import { Dialog } from '../components/ui/Dialog.js';
 import { Alert } from '../components/ui/Alert.js';
 import { api } from '../services/api.js';
 import { CertificationMasterDto, Role } from '@skillmatrix/shared';
-import { Award, Plus } from 'lucide-react';
+import { Award, Plus, Edit2, Trash2 } from 'lucide-react';
 
 export const CertificationMasterPage: React.FC = () => {
   const { user } = useAuth();
@@ -16,9 +16,17 @@ export const CertificationMasterPage: React.FC = () => {
 
   const [masters, setMasters] = useState<CertificationMasterDto[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // 新規登録モーダル
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({ name: '', issuer: '', category: '' });
   const [error, setError] = useState<string | null>(null);
+
+  // 編集モーダル
+  const [editingMaster, setEditingMaster] = useState<CertificationMasterDto | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', issuer: '', category: '' });
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchMasters = async () => {
     setLoading(true);
@@ -49,6 +57,44 @@ export const CertificationMasterPage: React.FC = () => {
     }
   };
 
+  const handleOpenEdit = (m: CertificationMasterDto) => {
+    setEditingMaster(m);
+    setEditForm({
+      name: m.name,
+      issuer: m.issuer || '',
+      category: m.category || ''
+    });
+    setEditError(null);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMaster) return;
+    setEditError(null);
+    setEditLoading(true);
+    try {
+      await api.put(`/api/v1/certifications/masters/${editingMaster.id}`, editForm);
+      setEditingMaster(null);
+      fetchMasters();
+    } catch (err: any) {
+      setEditError(err.message || '更新に失敗しました。');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`資格マスタ「${name}」を削除しますか？\n（※社員の保有資格として登録済みの場合は削除できません）`)) {
+      return;
+    }
+    try {
+      await api.delete(`/api/v1/certifications/masters/${id}`);
+      fetchMasters();
+    } catch (err: any) {
+      alert(err.message || '削除に失敗しました。');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -75,18 +121,21 @@ export const CertificationMasterPage: React.FC = () => {
                 <th className="px-6 py-3.5">{t.certMaster.name}</th>
                 <th className="px-6 py-3.5">{t.certMaster.issuer}</th>
                 <th className="px-6 py-3.5">{t.certMaster.category}</th>
+                {user?.role === Role.ADMIN && (
+                  <th className="px-6 py-3.5 text-right">{t.common.actions}</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
+                  <td colSpan={user?.role === Role.ADMIN ? 4 : 3} className="px-6 py-8 text-center text-slate-400">
                     {t.common.loading}
                   </td>
                 </tr>
               ) : masters.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
+                  <td colSpan={user?.role === Role.ADMIN ? 4 : 3} className="px-6 py-8 text-center text-slate-400">
                     {t.certMaster.noMasters}
                   </td>
                 </tr>
@@ -99,6 +148,28 @@ export const CertificationMasterPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{m.issuer || '-'}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{m.category || '-'}</td>
+                    {user?.role === Role.ADMIN && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEdit(m)}
+                            title={t.common.edit}
+                          >
+                            <Edit2 className="w-4 h-4 text-slate-500 hover:text-indigo-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(m.id, m.name)}
+                            title={t.common.delete}
+                          >
+                            <Trash2 className="w-4 h-4 text-slate-500 hover:text-rose-600" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -107,6 +178,7 @@ export const CertificationMasterPage: React.FC = () => {
         </div>
       </Card>
 
+      {/* 新規登録モーダル */}
       <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} title={t.certMaster.addMaster}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <Alert variant="danger">{error}</Alert>}
@@ -134,6 +206,42 @@ export const CertificationMasterPage: React.FC = () => {
               {t.common.cancel}
             </Button>
             <Button type="submit">{t.common.save}</Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* 編集モーダル */}
+      <Dialog
+        isOpen={Boolean(editingMaster)}
+        onClose={() => setEditingMaster(null)}
+        title={t.certMaster.editMaster}
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          {editError && <Alert variant="danger">{editError}</Alert>}
+          <Input
+            label={t.certMaster.name}
+            required
+            placeholder="AWS Certified Solutions Architect"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+          />
+          <Input
+            label={t.certMaster.issuer}
+            placeholder="Amazon Web Services, etc."
+            value={editForm.issuer}
+            onChange={(e) => setEditForm({ ...editForm, issuer: e.target.value })}
+          />
+          <Input
+            label={t.certMaster.category}
+            placeholder="Cloud, Database, Security, etc."
+            value={editForm.category}
+            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+          />
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={() => setEditingMaster(null)}>
+              {t.common.cancel}
+            </Button>
+            <Button type="submit" isLoading={editLoading}>{t.common.save}</Button>
           </div>
         </form>
       </Dialog>

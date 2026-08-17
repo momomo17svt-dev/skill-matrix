@@ -4,9 +4,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card.
 import { Badge } from '../components/ui/Badge.js';
 import { Dialog } from '../components/ui/Dialog.js';
 import { Button } from '../components/ui/Button.js';
+import { Input } from '../components/ui/Input.js';
+import { Select } from '../components/ui/Select.js';
 import { api } from '../services/api.js';
 import { AuditLogDto, PaginatedResult, AuditAction } from '@skillmatrix/shared';
-import { ShieldCheck, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Eye, ChevronLeft, ChevronRight, Search, RotateCcw } from 'lucide-react';
 
 export const AuditLogPage: React.FC = () => {
   const { t } = useI18n();
@@ -16,25 +18,72 @@ export const AuditLogPage: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+
+  // 検索条件
+  const [keyword, setKeyword] = useState('');
+  const [selectedAction, setSelectedAction] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // 適用された検索条件
+  const [appliedFilters, setAppliedFilters] = useState({
+    keyword: '',
+    action: '',
+    startDate: '',
+    endDate: ''
+  });
 
   // 差分表示モーダル
   const [selectedLog, setSelectedLog] = useState<AuditLogDto | null>(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (targetPage: number = page, targetLimit: number = limit) => {
     setLoading(true);
     try {
-      const res = await api.get<PaginatedResult<AuditLogDto>>('/api/v1/audit-logs', { page, limit: 50 });
+      const res = await api.get<PaginatedResult<AuditLogDto>>('/api/v1/audit-logs', {
+        page: targetPage,
+        limit: targetLimit,
+        keyword: appliedFilters.keyword || undefined,
+        action: appliedFilters.action || undefined,
+        startDate: appliedFilters.startDate || undefined,
+        endDate: appliedFilters.endDate || undefined
+      });
       setData(res);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch audit logs:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, [page]);
+    fetchLogs(page, limit);
+  }, [page, limit, appliedFilters]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setAppliedFilters({
+      keyword,
+      action: selectedAction,
+      startDate,
+      endDate
+    });
+  };
+
+  const handleResetFilters = () => {
+    setKeyword('');
+    setSelectedAction('');
+    setStartDate('');
+    setEndDate('');
+    setPage(1);
+    setAppliedFilters({
+      keyword: '',
+      action: '',
+      startDate: '',
+      endDate: ''
+    });
+  };
 
   const getActionBadgeVariant = (action: AuditAction) => {
     if (action.includes('DELETE') || action.includes('LOCK')) return 'danger';
@@ -51,6 +100,83 @@ export const AuditLogPage: React.FC = () => {
           {t.audit.subtitle}
         </p>
       </div>
+
+      {/* 検索・絞り込みフォーム */}
+      <Card>
+        <CardContent className="p-4">
+          <form onSubmit={handleSearchSubmit} className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="md:col-span-2">
+                <Input
+                  placeholder={t.audit.searchPlaceholder}
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Select
+                  value={selectedAction}
+                  onChange={(e) => setSelectedAction(e.target.value)}
+                  options={[
+                    { value: '', label: t.audit.allActions },
+                    ...Object.values(AuditAction).map((act) => ({
+                      value: act,
+                      label: act
+                    }))
+                  ]}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  title={t.audit.startDate}
+                />
+                <span className="text-slate-400 text-xs">〜</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  title={t.audit.endDate}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">{t.common.recordsCount}:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    const newLimit = parseInt(e.target.value, 10);
+                    setLimit(newLimit);
+                    setPage(1);
+                  }}
+                  className="text-xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded px-2 py-1 focus:outline-none"
+                >
+                  <option value={20}>20 {t.audit.perPage}</option>
+                  <option value={50}>50 {t.audit.perPage}</option>
+                  <option value={100}>100 {t.audit.perPage}</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" type="button" onClick={handleResetFilters}>
+                  <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                  {t.audit.reset}
+                </Button>
+                <Button size="sm" type="submit">
+                  <Search className="w-3.5 h-3.5 mr-1" />
+                  {t.common.search}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card>
         <div className="overflow-x-auto">
@@ -113,7 +239,7 @@ export const AuditLogPage: React.FC = () => {
         {data.pagination.totalPages > 1 && (
           <div className="px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <span className="text-xs text-slate-500">
-              {data.pagination.total} {t.common.recordsCount}
+              全 {data.pagination.total} {t.common.recordsCount} ({(page - 1) * limit + 1}〜{Math.min(page * limit, data.pagination.total)} 件)
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -131,7 +257,7 @@ export const AuditLogPage: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={!data.pagination.hasMore}
+                disabled={!data.pagination.hasMore && page >= data.pagination.totalPages}
                 onClick={() => setPage(page + 1)}
                 title={t.common.next}
               >

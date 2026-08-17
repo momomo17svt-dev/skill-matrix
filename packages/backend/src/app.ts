@@ -61,6 +61,7 @@ export function createApp() {
       },
       credentials: true,
       allowHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-CSRF-Token'],
+      exposeHeaders: ['Content-Disposition', 'X-Request-Id'],
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     })
   );

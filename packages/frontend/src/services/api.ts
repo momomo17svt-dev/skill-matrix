@@ -72,6 +72,37 @@ export async function request<T>(
   return data.data as T;
 }
 
+export async function downloadFile(url: string, filename: string): Promise<void> {
+  const token = getAuthToken();
+  const headers = new Headers();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error('ファイルのダウンロードに失敗しました。');
+  }
+
+  const blob = await response.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  }, 100);
+}
+
 export const api = {
   get: <T>(url: string, params?: Record<string, any>) => {
     let finalUrl = url;
@@ -106,5 +137,7 @@ export const api = {
 
   delete: <T>(url: string) => {
     return request<T>(url, { method: 'DELETE' });
-  }
+  },
+
+  download: downloadFile
 };

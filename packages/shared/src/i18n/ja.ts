@@ -217,6 +217,7 @@ export const ja = {
     title: '資格マスタ管理',
     subtitle: '社内認定資格および公式資格マスタの登録・保守',
     addMaster: '資格マスタを追加',
+    editMaster: '資格マスタの編集',
     category: 'カテゴリ',
     name: '資格名',
     issuer: '発行機関',
@@ -233,7 +234,13 @@ export const ja = {
     ip: 'IPアドレス',
     requestId: 'Request ID',
     changes: '変更差分 (Before / After)',
-    noLogs: '監査ログはありません。'
+    noLogs: '監査ログはありません。',
+    searchPlaceholder: '操作者・対象・社員番号・IP・Request IDで検索',
+    allActions: 'すべてのアクション',
+    startDate: '開始日',
+    endDate: '終了日',
+    perPage: '件表示',
+    reset: 'リセット'
   },
   settings: {
     title: 'システム設定',

@@ -47,10 +47,12 @@
 ### 2.6 資格 & 添付ファイル (`/api/v1/certifications`)
 - `GET /api/v1/certifications/masters`: 資格マスタ一覧
 - `POST /api/v1/certifications/masters`: 資格マスタ作成 (ADMIN)
+- `PUT /api/v1/certifications/masters/:id`: 資格マスタ更新 (ADMIN, トランザクション & 監査ログ)
+- `DELETE /api/v1/certifications/masters/:id`: 資格マスタ削除 (ADMIN, トランザクション & 参照整合性チェック & 監査ログ)
 - `POST /api/v1/certifications/employee/:employeeId`: 社員資格登録 (添付ファイルアップロード対応)
 - `PUT /api/v1/certifications/:id`: 社員資格更新
 - `DELETE /api/v1/certifications/:id`: 社員資格削除
-- `GET /api/v1/certifications/attachments/:attachmentId/download`: 添付ファイル安全ダウンロード
+- `GET /api/v1/certifications/attachments/:attachmentId/download[/:filename]`: 添付ファイル安全ダウンロード (RFC 6266準拠ヘッダー)
 
 ### 2.7 実務経歴 (`/api/v1/work-histories`)
 - `GET /api/v1/work-histories/employee/:employeeId`: 社員の実務経歴一覧 & 重複期間Union算出結果
@@ -65,4 +67,4 @@
 - `GET /api/v1/dashboard/stats`: ロール別KPI集計データ取得
 
 ### 2.10 監査ログ (`/api/v1/audit-logs`)
-- `GET /api/v1/audit-logs`: 監査ログ一覧 (ADMINのみ, ページネーション & 絞り込み)
+- `GET /api/v1/audit-logs`: 監査ログ一覧 (ADMINのみ, page, limit, keyword, action, targetType, startDate, endDate による複合検索・ページネーション)

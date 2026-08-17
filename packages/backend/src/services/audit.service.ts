@@ -47,12 +47,15 @@ export class AuditService {
   static async list(params: {
     page: number;
     limit: number;
+    keyword?: string;
     action?: string;
     targetType?: string;
     targetId?: string;
     actorId?: string;
+    startDate?: string;
+    endDate?: string;
   }) {
-    const { page, limit, action, targetType, targetId, actorId } = params;
+    const { page, limit, keyword, action, targetType, targetId, actorId, startDate, endDate } = params;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -60,6 +63,32 @@ export class AuditService {
     if (targetType) where.targetType = targetType;
     if (targetId) where.targetId = targetId;
     if (actorId) where.actorId = actorId;
+
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) {
+        where.timestamp.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.timestamp.lte = end;
+      }
+    }
+
+    if (keyword && keyword.trim()) {
+      const q = keyword.trim();
+      where.OR = [
+        { action: { contains: q, mode: 'insensitive' } },
+        { targetType: { contains: q, mode: 'insensitive' } },
+        { actorName: { contains: q, mode: 'insensitive' } },
+        { targetName: { contains: q, mode: 'insensitive' } },
+        { targetEmployeeNumber: { contains: q, mode: 'insensitive' } },
+        { targetId: { contains: q, mode: 'insensitive' } },
+        { ipAddress: { contains: q, mode: 'insensitive' } },
+        { requestId: { contains: q, mode: 'insensitive' } }
+      ];
+    }
 
     const [total, items] = await Promise.all([
       prisma.auditLog.count({ where }),

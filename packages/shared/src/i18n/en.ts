@@ -217,6 +217,7 @@ export const en = {
     title: 'Certifications Master',
     subtitle: 'Management of internal and official certification masters',
     addMaster: 'Add Master',
+    editMaster: 'Edit Master',
     category: 'Category',
     name: 'Certification Name',
     issuer: 'Issuer',
@@ -233,7 +234,13 @@ export const en = {
     ip: 'IP Address',
     requestId: 'Request ID',
     changes: 'Diff (Before / After)',
-    noLogs: 'No audit logs found.'
+    noLogs: 'No audit logs found.',
+    searchPlaceholder: 'Search by actor, target, employee no, IP, or Request ID',
+    allActions: 'All Actions',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    perPage: 'per page',
+    reset: 'Reset'
   },
   settings: {
     title: 'Settings',

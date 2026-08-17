@@ -1,10 +1,13 @@
 import { Hono } from 'hono';
 import fs from 'fs/promises';
+import path from 'path';
 import { CertificationService } from '../services/certification.service.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { requireRoles, assertCanAccessEmployee } from '../middlewares/rbacMiddleware.js';
 import {
   CreateCertificationMasterSchema,
+  UpdateCertificationMasterSchema,
+  UpdateEmployeeCertificationSchema,
   Role,
   AuthSessionUser
 } from '@skillmatrix/shared';
@@ -41,6 +44,47 @@ certificationRoutes.post('/masters', requireRoles([Role.ADMIN]), async (c) => {
     success: true,
     data: master
   }, 201);
+});
+
+// 資格マスタ更新 (ADMINのみ)
+certificationRoutes.put('/masters/:id', requireRoles([Role.ADMIN]), async (c) => {
+  const user = c.get('user') as AuthSessionUser;
+  const id = c.req.param('id');
+  const ip = c.req.header('x-forwarded-for') || '127.0.0.1';
+  const requestId = c.get('requestId');
+
+  const body = await c.req.json();
+  const validated = UpdateCertificationMasterSchema.parse(body);
+
+  const master = await CertificationService.updateMaster({
+    id,
+    name: validated.name,
+    issuer: validated.issuer,
+    category: validated.category,
+    user,
+    ipAddress: ip,
+    requestId
+  });
+
+  return c.json({
+    success: true,
+    data: master
+  });
+});
+
+// 資格マスタ削除 (ADMINのみ)
+certificationRoutes.delete('/masters/:id', requireRoles([Role.ADMIN]), async (c) => {
+  const user = c.get('user') as AuthSessionUser;
+  const id = c.req.param('id');
+  const ip = c.req.header('x-forwarded-for') || '127.0.0.1';
+  const requestId = c.get('requestId');
+
+  await CertificationService.deleteMaster(id, user, ip, requestId);
+
+  return c.json({
+    success: true,
+    data: { message: '資格マスタを削除しました。' }
+  });
 });
 
 // 社員保有資格登録 (JSONまたはmultipart/form-data)
@@ -112,6 +156,34 @@ certificationRoutes.post('/employee/:employeeId', async (c) => {
   }, 201);
 });
 
+// 社員保有資格更新
+certificationRoutes.put('/:id', async (c) => {
+  const user = c.get('user') as AuthSessionUser;
+  const id = c.req.param('id');
+  const ip = c.req.header('x-forwarded-for') || '127.0.0.1';
+  const requestId = c.get('requestId');
+
+  const body = await c.req.json();
+  const validated = UpdateEmployeeCertificationSchema.parse(body);
+
+  const cert = await CertificationService.updateEmployeeCertification({
+    id,
+    customCertificationName: validated.customCertificationName,
+    acquiredDate: validated.acquiredDate,
+    expirationDate: validated.expirationDate,
+    certificateNumber: validated.certificateNumber,
+    notes: validated.notes,
+    user,
+    ipAddress: ip,
+    requestId
+  });
+
+  return c.json({
+    success: true,
+    data: cert
+  });
+});
+
 // 社員保有資格削除
 certificationRoutes.delete('/:id', async (c) => {
   const user = c.get('user') as AuthSessionUser;
@@ -128,7 +200,7 @@ certificationRoutes.delete('/:id', async (c) => {
 });
 
 // 添付ファイル安全ダウンロード (IDORチェック付き)
-certificationRoutes.get('/attachments/:attachmentId/download', async (c) => {
+const handleDownloadAttachment = async (c: any) => {
   const user = c.get('user') as AuthSessionUser;
   const attachmentId = c.req.param('attachmentId');
 
@@ -138,10 +210,17 @@ certificationRoutes.get('/attachments/:attachmentId/download', async (c) => {
 
   const fileBytes = await fs.readFile(absolutePath);
 
-  // 安全なContent-Dispositionヘッダー
-  const encodedName = encodeURIComponent(attachment.originalFileName);
+  // RFC 6266 準拠の Content-Disposition ヘッダー
+  const ext = path.extname(attachment.originalFileName);
+  const base = path.basename(attachment.originalFileName, ext).replace(/[^\w.-]/g, '_');
+  const safeAsciiName = `${base || 'attachment'}${ext}`;
+  const encodedUtf8Name = encodeURIComponent(attachment.originalFileName);
+
   return c.newResponse(fileBytes, 200, {
-    'Content-Type': attachment.mimeType,
-    'Content-Disposition': `attachment; filename*=UTF-8''${encodedName}`
+    'Content-Type': attachment.mimeType || 'application/octet-stream',
+    'Content-Disposition': `attachment; filename="${safeAsciiName}"; filename*=UTF-8''${encodedUtf8Name}`
   });
-});
+};
+
+certificationRoutes.get('/attachments/:attachmentId/download', handleDownloadAttachment);
+certificationRoutes.get('/attachments/:attachmentId/download/:filename', handleDownloadAttachment);

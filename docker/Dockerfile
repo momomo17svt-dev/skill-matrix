@@ -36,7 +36,7 @@ RUN npm run build --workspace=packages/frontend
 # -------------------------------------------------------------------
 FROM node:20-alpine AS runner
 
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat su-exec
 
 WORKDIR /app
 
@@ -56,8 +56,15 @@ COPY --from=builder /app/packages/frontend/dist ./packages/frontend/dist
 # プロダクション依存のみインストール & Prismaクライアント生成
 RUN npm ci --omit=dev && npx prisma generate --schema=./packages/backend/prisma/schema.prisma
 
+# アップロードディレクトリ作成
+RUN mkdir -p /app/uploads && chown -R node:node /app
+
+# エントリポイントスクリプト設定
+COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3000
 
-USER node
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["sh", "-c", "npx prisma db push --schema=./packages/backend/prisma/schema.prisma --skip-generate && node packages/backend/dist/index.js"]

@@ -118,6 +118,8 @@ export const CreateCertificationMasterSchema = z.object({
   category: z.string().max(50).nullable().optional()
 });
 
+export const UpdateCertificationMasterSchema = CreateCertificationMasterSchema.partial();
+
 export const CreateEmployeeCertificationSchema = z.object({
   employeeId: z.string().uuid(),
   certificationMasterId: z.string().uuid().nullable().optional(),
@@ -134,12 +136,12 @@ export const UpdateEmployeeCertificationSchema = CreateEmployeeCertificationSche
 // 実務経歴 (Work History)
 // ==========================================
 export const CreateWorkHistorySchema = z.object({
-  employeeId: z.string().uuid(),
+  employeeId: z.string().uuid().optional(),
   projectName: z.string().min(1, '案件名を入力してください。').max(150),
   description: z.string().max(2000).nullable().optional(),
   role: z.string().max(100).nullable().optional(),
   startYearMonth: z.string().regex(/^\d{4}-\d{2}$/, '開始年月は YYYY-MM 形式で入力してください。'),
-  endYearMonth: z.string().regex(/^\d{4}-\d{2}$/, '終了年月は YYYY-MM 形式で入力してください。').nullable().optional(),
+  endYearMonth: z.string().regex(/^\d{4}-\d{2}$/, '終了年月は YYYY-MM 形式で入力してください。').nullable().optional().or(z.literal('')),
   isCurrent: z.boolean().default(false),
   notes: z.string().max(1000).nullable().optional(),
   skills: z.array(z.object({

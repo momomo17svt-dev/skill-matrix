@@ -39,7 +39,7 @@ workHistoryRoutes.post('/employee/:employeeId', async (c) => {
   await assertCanAccessEmployee(user, employeeId, 'write');
 
   const body = await c.req.json();
-  const validated = CreateWorkHistorySchema.parse(body);
+  const validated = CreateWorkHistorySchema.parse({ ...body, employeeId });
 
   const work = await WorkHistoryService.create({
     employeeId,
@@ -47,7 +47,7 @@ workHistoryRoutes.post('/employee/:employeeId', async (c) => {
     description: validated.description,
     role: validated.role,
     startYearMonth: validated.startYearMonth,
-    endYearMonth: validated.endYearMonth,
+    endYearMonth: validated.isCurrent || !validated.endYearMonth ? null : validated.endYearMonth,
     isCurrent: validated.isCurrent,
     notes: validated.notes,
     skills: validated.skills || [],

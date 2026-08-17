@@ -57,6 +57,7 @@ export const EmployeeDetailPage: React.FC = () => {
     nameKana: '',
     email: '',
     position: '',
+    hireDate: '',
     notes: '',
     departmentId: '',
     role: Role.GENERAL,
@@ -97,6 +98,34 @@ export const EmployeeDetailPage: React.FC = () => {
   });
   const [workLoading, setWorkLoading] = useState(false);
   const [workError, setWorkError] = useState<string | null>(null);
+
+  // 資格編集モーダル
+  const [editCertId, setEditCertId] = useState<string | null>(null);
+  const [editCertForm, setEditCertForm] = useState({
+    customCertificationName: '',
+    isCustom: false,
+    acquiredDate: '',
+    expirationDate: '',
+    certificateNumber: '',
+    notes: ''
+  });
+  const [editCertLoading, setEditCertLoading] = useState(false);
+  const [editCertError, setEditCertError] = useState<string | null>(null);
+
+  // 実務経歴編集モーダル
+  const [editWorkId, setEditWorkId] = useState<string | null>(null);
+  const [editWorkForm, setEditWorkForm] = useState({
+    projectName: '',
+    description: '',
+    role: '',
+    startYearMonth: '',
+    endYearMonth: '',
+    isCurrent: false,
+    notes: '',
+    skillsInput: ''
+  });
+  const [editWorkLoading, setEditWorkLoading] = useState(false);
+  const [editWorkError, setEditWorkError] = useState<string | null>(null);
 
   // スキル評価モーダル
   const [evalModal, setEvalModal] = useState<{
@@ -160,6 +189,7 @@ export const EmployeeDetailPage: React.FC = () => {
       nameKana: employee.nameKana || '',
       email: employee.email || '',
       position: employee.position || '',
+      hireDate: employee.hireDate ? employee.hireDate.split('T')[0] : '',
       notes: employee.notes || '',
       departmentId: employee.departmentId || '',
       role: employee.role || Role.GENERAL,
@@ -181,6 +211,7 @@ export const EmployeeDetailPage: React.FC = () => {
         nameKana: profileForm.nameKana,
         email: profileForm.email,
         position: profileForm.position,
+        hireDate: profileForm.hireDate || undefined,
         notes: profileForm.notes,
         departmentId: profileForm.departmentId,
         ...(user?.role === Role.ADMIN ? {
@@ -273,18 +304,112 @@ export const EmployeeDetailPage: React.FC = () => {
         description: workForm.description,
         role: workForm.role,
         startYearMonth: workForm.startYearMonth,
-        endYearMonth: workForm.isCurrent ? null : workForm.endYearMonth,
+        endYearMonth: workForm.isCurrent || !workForm.endYearMonth ? null : workForm.endYearMonth,
         isCurrent: workForm.isCurrent,
         notes: workForm.notes,
         skills
       });
 
       setIsAddWorkOpen(false);
+      setWorkForm({
+        projectName: '',
+        description: '',
+        role: '',
+        startYearMonth: '',
+        endYearMonth: '',
+        isCurrent: false,
+        notes: '',
+        skillsInput: ''
+      });
       fetchDetail();
     } catch (err: any) {
       setWorkError(err.message || '実務経歴の登録に失敗しました。');
     } finally {
       setWorkLoading(false);
+    }
+  };
+
+  // 資格編集ハンドラ
+  const openEditCert = (c: EmployeeDetailDto['certifications'][0]) => {
+    setEditCertId(c.id);
+    const isCustom = !c.certificationMasterId;
+    setEditCertForm({
+      customCertificationName: c.certificationName,
+      isCustom,
+      acquiredDate: c.acquiredDate ? c.acquiredDate.split('T')[0] : '',
+      expirationDate: c.expirationDate ? c.expirationDate.split('T')[0] : '',
+      certificateNumber: c.certificateNumber || '',
+      notes: c.notes || ''
+    });
+    setEditCertError(null);
+  };
+
+  const handleEditCertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCertId) return;
+    setEditCertLoading(true);
+    setEditCertError(null);
+    try {
+      await api.put(`/api/v1/certifications/${editCertId}`, {
+        acquiredDate: editCertForm.acquiredDate,
+        expirationDate: editCertForm.expirationDate || null,
+        certificateNumber: editCertForm.certificateNumber || null,
+        notes: editCertForm.notes || null,
+        ...(editCertForm.isCustom ? { customCertificationName: editCertForm.customCertificationName } : {})
+      });
+      setEditCertId(null);
+      fetchDetail();
+    } catch (err: any) {
+      setEditCertError(err.message || '資格の更新に失敗しました。');
+    } finally {
+      setEditCertLoading(false);
+    }
+  };
+
+  // 実務経歴編集ハンドラ
+  const openEditWork = (w: EmployeeDetailDto['workHistories'][0]) => {
+    setEditWorkId(w.id);
+    setEditWorkForm({
+      projectName: w.projectName,
+      description: w.description || '',
+      role: w.role || '',
+      startYearMonth: w.startYearMonth,
+      endYearMonth: w.endYearMonth || '',
+      isCurrent: w.isCurrent || false,
+      notes: w.notes || '',
+      skillsInput: w.skills ? w.skills.map((s: any) => s.skillName).join(', ') : ''
+    });
+    setEditWorkError(null);
+  };
+
+  const handleEditWorkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editWorkId) return;
+    setEditWorkLoading(true);
+    setEditWorkError(null);
+    try {
+      const skills = editWorkForm.skillsInput
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((skillName) => ({ skillName }));
+
+      await api.put(`/api/v1/work-histories/${editWorkId}`, {
+        projectName: editWorkForm.projectName,
+        description: editWorkForm.description,
+        role: editWorkForm.role,
+        startYearMonth: editWorkForm.startYearMonth,
+        endYearMonth: editWorkForm.isCurrent || !editWorkForm.endYearMonth ? null : editWorkForm.endYearMonth,
+        isCurrent: editWorkForm.isCurrent,
+        notes: editWorkForm.notes,
+        skills
+      });
+      setEditWorkId(null);
+      fetchDetail();
+    } catch (err: any) {
+      setEditWorkError(err.message || '実務経歴の更新に失敗しました。');
+    } finally {
+      setEditWorkLoading(false);
     }
   };
 
@@ -539,17 +664,27 @@ export const EmployeeDetailPage: React.FC = () => {
                       </div>
 
                       {(isSelf || canManage) && (
-                        <button
-                          onClick={async () => {
-                            if (confirm('この資格情報を削除しますか？')) {
-                              await api.delete(`/api/v1/certifications/${c.id}`);
-                              fetchDetail();
-                            }
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-rose-600 rounded transition-opacity"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditCert(c)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 rounded"
+                            title="編集"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('この資格情報を削除しますか？')) {
+                                await api.delete(`/api/v1/certifications/${c.id}`);
+                                fetchDetail();
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -561,16 +696,24 @@ export const EmployeeDetailPage: React.FC = () => {
 
                     {c.attachment && (
                       <div className="pt-2">
-                        <a
-                          href={`/api/v1/certifications/attachments/${c.attachment.id}/download`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors"
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await api.download(
+                                `/api/v1/certifications/attachments/${c.attachment!.id}/download/${encodeURIComponent(c.attachment!.originalFileName)}`,
+                                c.attachment!.originalFileName
+                              );
+                            } catch (err: any) {
+                              alert(err.message || 'ダウンロードに失敗しました。');
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition-colors cursor-pointer"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           <span>{c.attachment.originalFileName} ({(c.attachment.fileSize / 1024).toFixed(1)} KB)</span>
                           <Download className="w-3 h-3 ml-1" />
-                        </a>
+                        </button>
                       </div>
                     )}
                   </CardContent>
@@ -617,19 +760,31 @@ export const EmployeeDetailPage: React.FC = () => {
                       </div>
 
                       {(isSelf || canManage) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            if (confirm('この実務経歴を削除しますか？')) {
-                              await api.delete(`/api/v1/work-histories/${w.id}`);
-                              fetchDetail();
-                            }
-                          }}
-                          className="text-slate-400 hover:text-rose-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditWork(w)}
+                            className="text-slate-400 hover:text-indigo-600"
+                            title="編集"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm('この実務経歴を削除しますか？')) {
+                                await api.delete(`/api/v1/work-histories/${w.id}`);
+                                fetchDetail();
+                              }
+                            }}
+                            className="text-slate-400 hover:text-rose-600"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       )}
                     </div>
 
@@ -852,15 +1007,15 @@ export const EmployeeDetailPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label={t.workHistory.startYearMonth}
+              type="month"
               required
-              placeholder="2023-04"
               value={workForm.startYearMonth}
               onChange={(e) => setWorkForm({ ...workForm, startYearMonth: e.target.value })}
             />
             {!workForm.isCurrent && (
               <Input
                 label={t.workHistory.endYearMonth}
-                placeholder="2024-03"
+                type="month"
                 value={workForm.endYearMonth}
                 onChange={(e) => setWorkForm({ ...workForm, endYearMonth: e.target.value })}
               />
@@ -922,6 +1077,161 @@ export const EmployeeDetailPage: React.FC = () => {
         </form>
       </Dialog>
 
+      {/* 資格編集モーダル */}
+      <Dialog
+        isOpen={Boolean(editCertId)}
+        onClose={() => setEditCertId(null)}
+        title="資格情報の編集"
+      >
+        <form onSubmit={handleEditCertSubmit} className="space-y-4">
+          {editCertError && <Alert variant="danger">{editCertError}</Alert>}
+
+          <Input
+            label="資格名"
+            required={editCertForm.isCustom}
+            disabled={!editCertForm.isCustom}
+            value={editCertForm.customCertificationName}
+            onChange={(e) => setEditCertForm({ ...editCertForm, customCertificationName: e.target.value })}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="取得日"
+              type="date"
+              required
+              value={editCertForm.acquiredDate}
+              onChange={(e) => setEditCertForm({ ...editCertForm, acquiredDate: e.target.value })}
+            />
+            <Input
+              label="有効期限"
+              type="date"
+              value={editCertForm.expirationDate}
+              onChange={(e) => setEditCertForm({ ...editCertForm, expirationDate: e.target.value })}
+            />
+          </div>
+
+          <Input
+            label="証明書番号"
+            value={editCertForm.certificateNumber}
+            onChange={(e) => setEditCertForm({ ...editCertForm, certificateNumber: e.target.value })}
+          />
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              備考
+            </label>
+            <textarea
+              rows={2}
+              value={editCertForm.notes}
+              onChange={(e) => setEditCertForm({ ...editCertForm, notes: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={() => setEditCertId(null)}>
+              {t.common.cancel}
+            </Button>
+            <Button type="submit" isLoading={editCertLoading}>
+              {t.common.save}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* 実務経歴編集モーダル */}
+      <Dialog
+        isOpen={Boolean(editWorkId)}
+        onClose={() => setEditWorkId(null)}
+        title="実務経歴の編集"
+        maxWidth="lg"
+      >
+        <form onSubmit={handleEditWorkSubmit} className="space-y-4">
+          {editWorkError && <Alert variant="danger">{editWorkError}</Alert>}
+
+          <div>
+            <Input
+              label={t.workHistory.projectName}
+              required
+              placeholder="案件・プロジェクト名"
+              value={editWorkForm.projectName}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, projectName: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={t.workHistory.startYearMonth}
+              type="month"
+              required
+              value={editWorkForm.startYearMonth}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, startYearMonth: e.target.value })}
+            />
+            {!editWorkForm.isCurrent && (
+              <Input
+                label={t.workHistory.endYearMonth}
+                type="month"
+                value={editWorkForm.endYearMonth}
+                onChange={(e) => setEditWorkForm({ ...editWorkForm, endYearMonth: e.target.value })}
+              />
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsCurrent"
+              checked={editWorkForm.isCurrent}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, isCurrent: e.target.checked })}
+              className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+            />
+            <label htmlFor="editIsCurrent" className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t.workHistory.isCurrent}
+            </label>
+          </div>
+
+          <div>
+            <Input
+              label={t.workHistory.role}
+              placeholder="リーダー, バックエンド開発, アーキテクト等"
+              value={editWorkForm.role}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, role: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <Input
+              label="使用技術・スキル (カンマ区切り)"
+              placeholder="C#, React, TypeScript, SQL Server"
+              value={editWorkForm.skillsInput}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, skillsInput: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {t.workHistory.description}
+            </label>
+            <textarea
+              rows={3}
+              value={editWorkForm.description}
+              onChange={(e) => setEditWorkForm({ ...editWorkForm, description: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="業務内容・担当範囲など"
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={() => setEditWorkId(null)}>
+              {t.common.cancel}
+            </Button>
+            <Button type="submit" isLoading={editWorkLoading}>
+              {t.common.save}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
       {/* 基本情報編集モーダル */}
       <Dialog
         isOpen={isEditProfileOpen}
@@ -962,15 +1272,24 @@ export const EmployeeDetailPage: React.FC = () => {
             </div>
             <div>
               <Input
+                label={t.employee.hireDate}
+                type="date"
+                required
+                value={profileForm.hireDate}
+                onChange={(e) => setProfileForm({ ...profileForm, hireDate: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Input
                 label={t.employee.position}
                 placeholder={t.employee.positionPlaceholder}
                 value={profileForm.position}
                 onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Select
                 label={t.employee.department}
@@ -979,8 +1298,10 @@ export const EmployeeDetailPage: React.FC = () => {
                 options={departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))}
               />
             </div>
+          </div>
 
-            {user?.role === Role.ADMIN ? (
+          {user?.role === Role.ADMIN && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Select
                   label={t.employee.role}
@@ -993,8 +1314,9 @@ export const EmployeeDetailPage: React.FC = () => {
                   ]}
                 />
               </div>
-            ) : <div />}
-          </div>
+              <div />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
