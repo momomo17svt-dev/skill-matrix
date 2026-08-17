@@ -14,6 +14,28 @@ export class ApiError extends Error {
   }
 }
 
+const TOKEN_STORAGE_KEY = 'skillmatrix_token';
+
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string): void {
+  try {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } catch {}
+}
+
+export function clearAuthToken(): void {
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  } catch {}
+}
+
 export async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -25,10 +47,15 @@ export async function request<T>(
     headers.set('Content-Type', 'application/json');
   }
 
+  const token = getAuthToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include' // Cookieセッション送信
+    credentials: 'include' // Cookieセッション送信 (ハイブリッド対応)
   });
 
   const isJson = response.headers.get('content-type')?.includes('application/json');

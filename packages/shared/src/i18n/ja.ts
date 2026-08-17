@@ -26,7 +26,14 @@ export const ja = {
     no: 'いいえ',
     unknown: '不明',
     all: 'すべて',
-    none: 'なし'
+    none: 'なし',
+    allDepartments: 'すべての部署',
+    allStatuses: 'すべての状態',
+    unspecified: '指定なし',
+    recordsCount: '件',
+    showingRange: '全 {total} 件中 {from} 〜 {to} 件を表示',
+    previous: '前へ',
+    next: '次へ'
   },
   auth: {
     login: 'ログイン',
@@ -45,11 +52,12 @@ export const ja = {
     accountLocked: 'アカウントがロックされています。しばらく経ってから再度お試しください。',
     invalidCredentials: 'ログインIDまたはパスワードが正しくありません。',
     unauthorized: '認証が必要です。',
-    forbidden: 'アクセス権限がありません。'
+    forbidden: 'アクセス権限がありません。',
+    subTitle: 'システム開発部署向けスキル管理・人材マトリクス'
   },
   roles: {
     ADMIN: 'システム管理者',
-    DEPARTMENT_MANAGER: '部署長',
+    DEPARTMENT_MANAGER: '所属長',
     GENERAL: '一般社員'
   },
   employeeStatus: {
@@ -75,6 +83,7 @@ export const ja = {
   },
   dashboard: {
     title: 'ダッシュボード',
+    subtitle: '組織内の人材スキル、資格保有状況、評価ギャップの統計分析',
     totalEmployees: '総社員数',
     departments: '部署数',
     certifications: '保有資格総数',
@@ -86,27 +95,37 @@ export const ja = {
     recentUpdates: '最近更新された社員',
     gapSelfHigher: '自己評価が高い',
     gapEqual: '一致',
-    gapManagerHigher: '上長評価が高い'
+    gapManagerHigher: '上長評価が高い',
+    noData: '表示可能なデータがありません。'
   },
   employee: {
     listTitle: '社員一覧',
+    subtitle: '組織に所属するエンジニア・社員の検索と管理',
     detailTitle: '社員詳細',
     createTitle: '社員新規登録',
     editTitle: '社員編集',
+    editProfile: '基本情報を編集',
+    editProfileTitle: '社員基本情報の編集',
     number: '社員番号',
     name: '氏名',
-    nameKana: '氏名カナ',
+    nameKana: 'フリガナ',
     email: 'メールアドレス',
     department: '所属部署',
     position: '役職',
     role: 'システム権限',
     hireDate: '入社日',
     status: '在籍状態',
+    notes: '備考 / 自己紹介',
+    notesPlaceholder: '得意分野や特記事項など',
+    positionPlaceholder: '例: シニアエンジニア, リーダー, 課長等',
+    searchPlaceholder: '氏名・カナ・社員番号・メール',
     certificationsTab: '保有資格',
     workHistoriesTab: '実務経歴',
     skillsTab: 'スキル評価マトリクス',
     historyTab: '評価変更履歴',
-    deleteConfirm: 'この社員を削除してもよろしいですか？関連する資格、実務歴、評価データも同時に物理削除されます。'
+    deleteConfirm: 'この社員を削除してもよろしいですか？関連する資格、実務歴、評価データも同時に物理削除されます。',
+    notFound: '社員が見つかりませんでした。',
+    totalCount: '全 {count} 名'
   },
   skills: {
     title: 'スキル管理',
@@ -121,7 +140,13 @@ export const ja = {
     historyTitle: 'スキル評価履歴',
     updateSelfEval: '自己評価を更新',
     updateManagerEval: '所属長評価を更新',
-    noSkills: '定義されているスキルがありません。'
+    noSkills: '定義されているスキルがありません。',
+    addCategory: 'カテゴリ追加',
+    addSkill: 'スキル追加',
+    levelA_desc: 'A: 指導可能 (他者を指導・リードできる)',
+    levelB_desc: 'B: 単独遂行 (指示なく自律して業務を完遂できる)',
+    levelC_desc: 'C: 支援必要 (指示・サポートのもとで遂行できる)',
+    unevaluated_desc: '未評価'
   },
   certifications: {
     title: '保有資格',
@@ -134,7 +159,8 @@ export const ja = {
     attachment: '証明書・賞状ファイル',
     uploadPrompt: 'PDF, PNG, JPG をドラッグ＆ドロップまたは選択 (最大10MB)',
     download: 'ダウンロード',
-    noCerts: '登録されている資格はありません。'
+    noCerts: '登録されている資格はありません。',
+    deleteConfirm: 'この資格レコードを削除しますか？添付ファイルも削除されます。'
   },
   workHistory: {
     title: '実務経歴',
@@ -147,37 +173,82 @@ export const ja = {
     endYearMonth: '終了年月 (YYYY-MM)',
     isCurrent: '現在進行中',
     usedSkills: '使用技術・スキル',
+    usedSkillsPlaceholder: 'C#, React, TypeScript, PostgreSQL 等',
     totalExperience: '通算実務経験 (重複除外)',
-    noWork: '登録されている実務経歴はありません。'
+    noWork: '登録されている実務経歴はありません。',
+    deleteConfirm: 'この実務経歴レコードを削除しますか？'
   },
   search: {
     title: '人材検索',
+    subtitle: 'スキル評価・実務経験年数（重複期間除外）・保有資格を複合した高精度な人材検索',
     conditions: '検索条件',
     results: '検索結果',
     skillCondition: 'スキル・評価条件',
     certCondition: '資格条件',
     workCondition: '実務経験・技術条件',
-    minExperience: '実務経験年数以上',
-    technology: '使用技術 (部分一致)',
+    minExperience: '通算実務経験年数以上 (年)',
+    minExperiencePlaceholder: '例: 3',
+    technology: '使用技術 (実務案件)',
+    technologyPlaceholder: 'Java, Python, Docker 等',
+    certPlaceholder: 'AWS, 応用情報, データベース 等',
+    skillPlaceholder: 'C#, React, AWS 等',
+    nameKanaLabel: '氏名・カナ',
+    nameKanaPlaceholder: '山田 太郎',
     includeSubDepts: '配下部署を含める',
-    noResults: '条件に一致する社員は見つかりませんでした。'
+    noResults: '条件に一致する社員は見つかりませんでした。',
+    matchedSkills: '該当スキル',
+    matchedCertsAndExp: '該当資格 & 経験',
+    actualExp: '実稼働経験',
+    certs: '資格'
+  },
+  department: {
+    title: '組織・部署管理',
+    subtitle: '部署階層ツリーおよび各部署のスキル定義',
+    addRoot: '最上位部署を追加',
+    addChild: '配下部署を追加',
+    addCategory: 'カテゴリ追加',
+    addSkill: 'スキル追加',
+    code: '部署コード',
+    name: '部署名',
+    deleteConfirm: 'この部署を削除しますか？配下の部署やスキル定義も削除されます。',
+    noDepartments: '部署が登録されていません。'
+  },
+  certMaster: {
+    title: '資格マスタ管理',
+    subtitle: '社内認定資格および公式資格マスタの登録・保守',
+    addMaster: '資格マスタを追加',
+    category: 'カテゴリ',
+    name: '資格名',
+    issuer: '発行機関',
+    difficulty: '難易度',
+    noMasters: '資格マスタが登録されていません。'
   },
   audit: {
     title: '監査ログ',
+    subtitle: 'システム内の全操作・権限変更・データ更新の不変記録',
     timestamp: '日時',
     actor: '操作者',
     action: 'アクション',
     target: '対象',
     ip: 'IPアドレス',
     requestId: 'Request ID',
-    changes: '変更差分 (Before / After)'
+    changes: '変更差分 (Before / After)',
+    noLogs: '監査ログはありません。'
   },
   settings: {
     title: 'システム設定',
-    language: '言語設定',
+    subtitle: '表示言語、カラーテーマ、セキュリティ設定の管理',
+    displaySection: '表示・地域設定',
+    language: '表示言語',
     theme: 'テーマ設定',
     themeLight: 'ライトモード',
     themeDark: 'ダークモード',
-    themeSystem: 'システム設定に従う'
+    themeSystem: 'システム設定に従う',
+    securitySection: 'セキュリティ & パスワード',
+    currentPasswordLabel: '現在のパスワード',
+    newPasswordLabel: '新しいパスワード',
+    confirmPasswordLabel: '新しいパスワード (確認)',
+    passwordMinLength: '新しいパスワードは8文字以上で入力してください。',
+    passwordMismatch: '確認用パスワードが一致しません。'
   }
 };

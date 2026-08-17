@@ -215,9 +215,9 @@ export const DepartmentManagePage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.nav.organization}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.department.title}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            組織階層ツリーおよび部署固有スキルセットの管理
+            {t.department.subtitle}
           </p>
         </div>
 
@@ -230,7 +230,7 @@ export const DepartmentManagePage: React.FC = () => {
             className="flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>部署を追加</span>
+            <span>{t.department.addRoot}</span>
           </Button>
         )}
       </div>
@@ -239,11 +239,11 @@ export const DepartmentManagePage: React.FC = () => {
         {/* 組織ツリー */}
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">組織ツリー</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t.department.title}</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
             {loading ? (
-              <p className="text-xs text-slate-400 p-4 text-center">読み込み中...</p>
+              <p className="text-xs text-slate-400 p-4 text-center">{t.common.loading}</p>
             ) : (
               renderTree(departments)
             )}
@@ -255,11 +255,11 @@ export const DepartmentManagePage: React.FC = () => {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold">
-                {selectedDept ? `${selectedDept.name} のスキルセット` : '部署を選択してください'}
+                {selectedDept ? `${selectedDept.name}` : t.department.title}
               </CardTitle>
               {selectedDept && (
                 <p className="text-xs text-slate-400 mt-0.5">
-                  階層パス: {selectedDept.path} (所属社員: {selectedDept.employeeCount || 0}名)
+                  Path: {selectedDept.path} ({t.dashboard.totalEmployees}: {selectedDept.employeeCount || 0})
                 </p>
               )}
             </div>
@@ -268,11 +268,11 @@ export const DepartmentManagePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setIsCatModalOpen(true)}>
                   <FolderPlus className="w-3.5 h-3.5 mr-1" />
-                  カテゴリ追加
+                  {t.skills.addCategory}
                 </Button>
                 <Button size="sm" onClick={() => setIsSkillModalOpen(true)}>
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  スキル追加
+                  {t.skills.addSkill}
                 </Button>
               </div>
             )}
@@ -281,7 +281,7 @@ export const DepartmentManagePage: React.FC = () => {
           <CardContent className="space-y-6">
             {deptSkills.length === 0 ? (
               <div className="p-8 text-center text-slate-400">
-                この部署にはスキルが定義されていません。「カテゴリ追加」「スキル追加」から登録してください。
+                {t.skills.noSkills}
               </div>
             ) : (
               deptSkills.map((cat) => (
@@ -317,13 +317,13 @@ export const DepartmentManagePage: React.FC = () => {
       <Dialog
         isOpen={isDeptModalOpen}
         onClose={() => setIsDeptModalOpen(false)}
-        title={deptForm.id ? '部署の編集' : '部署の新規作成'}
+        title={deptForm.id ? t.common.edit : t.department.addRoot}
       >
         <form onSubmit={handleDeptSubmit} className="space-y-4">
           {deptModalError && <Alert variant="danger">{deptModalError}</Alert>}
 
           <Input
-            label="部署コード"
+            label={t.department.code}
             required
             placeholder="DEV-1"
             value={deptForm.code}
@@ -331,19 +331,19 @@ export const DepartmentManagePage: React.FC = () => {
           />
 
           <Input
-            label="部署名"
+            label={t.department.name}
             required
-            placeholder="第1開発部"
+            placeholder="Engineering Dept 1"
             value={deptForm.name}
             onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
           />
 
           <Select
-            label="親部署 (未指定でルート)"
+            label="Parent Department"
             value={deptForm.parentId}
             onChange={(e) => setDeptForm({ ...deptForm, parentId: e.target.value })}
           >
-            <option value="">ルート部署 (親なし)</option>
+            <option value="">{t.common.none} (Root)</option>
             {flatDepts
               .filter((d) => d.id !== deptForm.id)
               .map((d) => (
@@ -354,7 +354,7 @@ export const DepartmentManagePage: React.FC = () => {
           </Select>
 
           <Input
-            label="表示順"
+            label="Sort Order"
             type="number"
             value={String(deptForm.sortOrder)}
             onChange={(e) => setDeptForm({ ...deptForm, sortOrder: Number(e.target.value) })}
@@ -372,17 +372,17 @@ export const DepartmentManagePage: React.FC = () => {
       </Dialog>
 
       {/* カテゴリ追加モーダル */}
-      <Dialog isOpen={isCatModalOpen} onClose={() => setIsCatModalOpen(false)} title="スキルカテゴリの追加">
+      <Dialog isOpen={isCatModalOpen} onClose={() => setIsCatModalOpen(false)} title={t.skills.addCategory}>
         <form onSubmit={handleCatSubmit} className="space-y-4">
           <Input
-            label="カテゴリ名"
+            label={t.skills.category}
             required
-            placeholder="バックエンド言語 & DB"
+            placeholder="Backend & DB"
             value={catForm.name}
             onChange={(e) => setCatForm({ ...catForm, name: e.target.value })}
           />
           <Input
-            label="表示順"
+            label="Sort Order"
             type="number"
             value={String(catForm.sortOrder)}
             onChange={(e) => setCatForm({ ...catForm, sortOrder: Number(e.target.value) })}
@@ -397,15 +397,15 @@ export const DepartmentManagePage: React.FC = () => {
       </Dialog>
 
       {/* スキル追加モーダル */}
-      <Dialog isOpen={isSkillModalOpen} onClose={() => setIsSkillModalOpen(false)} title="スキル定義の追加">
+      <Dialog isOpen={isSkillModalOpen} onClose={() => setIsSkillModalOpen(false)} title={t.skills.addSkill}>
         <form onSubmit={handleSkillSubmit} className="space-y-4">
           <Select
-            label="所属カテゴリ"
+            label={t.skills.category}
             required
             value={skillForm.categoryId}
             onChange={(e) => setSkillForm({ ...skillForm, categoryId: e.target.value })}
           >
-            <option value="">カテゴリを選択してください</option>
+            <option value="">{t.common.unspecified}</option>
             {deptSkills.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -414,7 +414,7 @@ export const DepartmentManagePage: React.FC = () => {
           </Select>
 
           <Input
-            label="スキル名"
+            label={t.skills.skillName}
             required
             placeholder="C# / .NET Core"
             value={skillForm.name}
@@ -422,14 +422,14 @@ export const DepartmentManagePage: React.FC = () => {
           />
 
           <Input
-            label="備考 / 説明"
-            placeholder="ASP.NET Core, EF Core などの実務経験"
+            label={t.common.notes}
+            placeholder="ASP.NET Core, EF Core, etc."
             value={skillForm.notes}
             onChange={(e) => setSkillForm({ ...skillForm, notes: e.target.value })}
           />
 
           <Input
-            label="表示順"
+            label="Sort Order"
             type="number"
             value={String(skillForm.sortOrder)}
             onChange={(e) => setSkillForm({ ...skillForm, sortOrder: Number(e.target.value) })}

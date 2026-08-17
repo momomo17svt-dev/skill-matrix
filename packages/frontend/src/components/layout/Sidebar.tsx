@@ -18,15 +18,17 @@ export const Sidebar: React.FC = () => {
   const { user } = useAuth();
   const { t } = useI18n();
 
+  const currentEmployeeId = user?.employeeId || (user as any)?.id;
+
   const navItems = [
-    { to: '/dashboard', label: t.nav.dashboard, icon: LayoutDashboard, roles: ['ADMIN', 'DEPARTMENT_MANAGER'] },
-    { to: '/employees', label: t.nav.employees, icon: Users, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'] },
-    { to: '/search', label: t.nav.search, icon: Search, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'] },
-    { to: `/employees/${user?.employeeId}`, label: t.nav.myProfile, icon: UserCheck, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'] },
-    { to: '/departments', label: t.nav.organization, icon: Building2, roles: ['ADMIN'] },
-    { to: '/certifications/masters', label: t.nav.certMaster, icon: Award, roles: ['ADMIN'] },
-    { to: '/audit-logs', label: t.nav.auditLogs, icon: ShieldCheck, roles: ['ADMIN'] },
-    { to: '/settings', label: t.nav.settings, icon: Settings, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'] }
+    { to: '/dashboard', label: t.nav.dashboard, icon: LayoutDashboard, roles: ['ADMIN', 'DEPARTMENT_MANAGER'], end: true },
+    { to: '/employees', label: t.nav.employees, icon: Users, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'], end: true },
+    { to: '/search', label: t.nav.search, icon: Search, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'], end: true },
+    { to: currentEmployeeId ? `/employees/${currentEmployeeId}` : '/employees', label: t.nav.myProfile, icon: UserCheck, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'], end: true },
+    { to: '/departments', label: t.nav.organization, icon: Building2, roles: ['ADMIN'], end: true },
+    { to: '/certifications/masters', label: t.nav.certMaster, icon: Award, roles: ['ADMIN'], end: true },
+    { to: '/audit-logs', label: t.nav.auditLogs, icon: ShieldCheck, roles: ['ADMIN'], end: true },
+    { to: '/settings', label: t.nav.settings, icon: Settings, roles: ['ADMIN', 'DEPARTMENT_MANAGER', 'GENERAL'], end: true }
   ];
 
   const filteredItems = navItems.filter((item) => !user || item.roles.includes(user.role));
@@ -40,6 +42,7 @@ export const Sidebar: React.FC = () => {
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.end}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',

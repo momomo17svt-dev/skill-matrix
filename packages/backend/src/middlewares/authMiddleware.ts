@@ -8,9 +8,11 @@ import { AuthSessionUser, Role } from '@skillmatrix/shared';
 
 export const authMiddleware = (optional = false) =>
   createMiddleware(async (c, next) => {
+    const authHeader = c.req.header('authorization');
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
     const cookieHeader = c.req.header('cookie');
     const cookies = cookieHeader ? cookie.parse(cookieHeader) : {};
-    const rawToken = cookies[config.session.cookieName];
+    const rawToken = bearerToken || cookies[config.session.cookieName];
 
     if (!rawToken) {
       if (optional) {

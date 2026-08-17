@@ -162,7 +162,7 @@ export const EmployeeListPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.employee.listTitle}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            組織に所属するエンジニア・社員の検索と管理
+            {t.employee.subtitle}
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export const EmployeeListPage: React.FC = () => {
           <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Input
-                placeholder="氏名・カナ・社員番号・メール"
+                placeholder={t.employee.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -194,7 +194,7 @@ export const EmployeeListPage: React.FC = () => {
                   setPage(1);
                 }}
               >
-                <option value="">すべての部署</option>
+                <option value="">{t.common.allDepartments}</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -211,7 +211,7 @@ export const EmployeeListPage: React.FC = () => {
                   setPage(1);
                 }}
               >
-                <option value="">すべての状態</option>
+                <option value="">{t.common.allStatuses}</option>
                 <option value={EmployeeStatus.ACTIVE}>{t.employeeStatus.ACTIVE}</option>
                 <option value={EmployeeStatus.ON_LEAVE}>{t.employeeStatus.ON_LEAVE}</option>
                 <option value={EmployeeStatus.RETIRED}>{t.employeeStatus.RETIRED}</option>
@@ -285,7 +285,7 @@ export const EmployeeListPage: React.FC = () => {
               ) : !data || data.items.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
-                    社員が見つかりませんでした。
+                    {t.employee.notFound}
                   </td>
                 </tr>
               ) : (
@@ -340,7 +340,10 @@ export const EmployeeListPage: React.FC = () => {
           <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-500">
-                全 {data.pagination.total} 件中 {(page - 1) * limit + 1} - {Math.min(page * limit, data.pagination.total)} 件表示
+                {t.common.showingRange
+                  .replace('{total}', String(data.pagination.total))
+                  .replace('{from}', String((page - 1) * limit + 1))
+                  .replace('{to}', String(Math.min(page * limit, data.pagination.total)))}
               </span>
               <Select
                 value={String(limit)}
@@ -350,9 +353,9 @@ export const EmployeeListPage: React.FC = () => {
                 }}
                 className="w-24 h-8 text-xs"
               >
-                <option value="25">25件</option>
-                <option value="50">50件</option>
-                <option value="100">100件</option>
+                <option value="25">25 {t.common.recordsCount}</option>
+                <option value="50">50 {t.common.recordsCount}</option>
+                <option value="100">100 {t.common.recordsCount}</option>
               </Select>
             </div>
 
@@ -362,6 +365,7 @@ export const EmployeeListPage: React.FC = () => {
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
+                title={t.common.previous}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -373,6 +377,7 @@ export const EmployeeListPage: React.FC = () => {
                 size="sm"
                 disabled={!data.pagination.hasMore}
                 onClick={() => setPage(page + 1)}
+                title={t.common.next}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -415,7 +420,7 @@ export const EmployeeListPage: React.FC = () => {
               required
               value={createForm.name}
               onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              placeholder="山田 太郎"
+              placeholder={t.search.nameKanaPlaceholder}
             />
             <Input
               label={t.employee.nameKana}
@@ -433,7 +438,7 @@ export const EmployeeListPage: React.FC = () => {
               value={createForm.departmentId}
               onChange={(e) => setCreateForm({ ...createForm, departmentId: e.target.value })}
             >
-              <option value="">部署を選択してください</option>
+              <option value="">{t.common.allDepartments}</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -445,7 +450,7 @@ export const EmployeeListPage: React.FC = () => {
               label={t.employee.position}
               value={createForm.position}
               onChange={(e) => setCreateForm({ ...createForm, position: e.target.value })}
-              placeholder="シニアエンジニア"
+              placeholder={t.employee.positionPlaceholder}
             />
           </div>
 

@@ -13,6 +13,7 @@ import { Alert } from '../components/ui/Alert.js';
 import { api, ApiError } from '../services/api.js';
 import {
   EmployeeDetailDto,
+  DepartmentDto,
   Role,
   SkillLevel,
   CertificationMasterDto,
@@ -38,7 +39,7 @@ import {
 
 export const EmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -48,6 +49,22 @@ export const EmployeeDetailPage: React.FC = () => {
 
   // 資格マスタ一覧
   const [certMasters, setCertMasters] = useState<CertificationMasterDto[]>([]);
+
+  // プロフィール編集モーダル
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    nameKana: '',
+    email: '',
+    position: '',
+    notes: '',
+    departmentId: '',
+    role: Role.GENERAL,
+    status: 'ACTIVE'
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<any[]>([]);
 
   // 評価履歴
   const [histories, setHistories] = useState<SkillEvaluationHistoryDto[]>([]);
@@ -121,10 +138,66 @@ export const EmployeeDetailPage: React.FC = () => {
       try {
         const masters = await api.get<CertificationMasterDto[]>('/api/v1/certifications/masters');
         setCertMasters(masters);
+        const tree = await api.get<DepartmentDto[]>('/api/v1/departments');
+        const flatten = (items: DepartmentDto[]): DepartmentDto[] => {
+          let list: DepartmentDto[] = [];
+          items.forEach((item) => {
+            list.push(item);
+            if (item.children) list = list.concat(flatten(item.children));
+          });
+          return list;
+        };
+        setDepartments(flatten(tree));
       } catch (err) {}
     };
     loadMasters();
   }, []);
+
+  const openEditProfile = () => {
+    if (!employee) return;
+    setProfileForm({
+      name: employee.name || '',
+      nameKana: employee.nameKana || '',
+      email: employee.email || '',
+      position: employee.position || '',
+      notes: employee.notes || '',
+      departmentId: employee.departmentId || '',
+      role: employee.role || Role.GENERAL,
+      status: employee.status || 'ACTIVE'
+    });
+    setProfileError(null);
+    setIsEditProfileOpen(true);
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employee) return;
+    setProfileLoading(true);
+    setProfileError(null);
+
+    try {
+      await api.put(`/api/v1/employees/${employee.id}`, {
+        name: profileForm.name,
+        nameKana: profileForm.nameKana,
+        email: profileForm.email,
+        position: profileForm.position,
+        notes: profileForm.notes,
+        departmentId: profileForm.departmentId,
+        ...(user?.role === Role.ADMIN ? {
+          role: profileForm.role,
+          status: profileForm.status
+        } : {})
+      });
+
+      setIsEditProfileOpen(false);
+      await fetchDetail();
+      await refreshUser();
+    } catch (err: any) {
+      setProfileError(err.message || 'プロフィールの更新に失敗しました。');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const loadHistories = async () => {
     if (!id) return;
@@ -239,10 +312,10 @@ export const EmployeeDetailPage: React.FC = () => {
   };
 
   const getLevelBadge = (level: SkillLevel) => {
-    if (level === SkillLevel.A) return <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold">A: 指導可能</span>;
-    if (level === SkillLevel.B) return <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">B: 単独遂行</span>;
-    if (level === SkillLevel.C) return <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold">C: 支援必要</span>;
-    return <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-lg text-xs font-medium">未評価</span>;
+    if (level === SkillLevel.A) return <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold">{t.skillLevels.A}</span>;
+    if (level === SkillLevel.B) return <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold">{t.skillLevels.B}</span>;
+    if (level === SkillLevel.C) return <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold">{t.skillLevels.C}</span>;
+    return <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-lg text-xs font-medium">{t.skillLevels.UNEVALUATED}</span>;
   };
 
   return (
@@ -284,14 +357,25 @@ export const EmployeeDetailPage: React.FC = () => {
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
-                    入社: {employee.hireDate}
+                    {t.employee.hireDate}: {employee.hireDate}
                   </span>
                 </div>
               </div>
             </div>
 
-            {user?.role === Role.ADMIN && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {(user?.role === Role.ADMIN || user?.employeeId === employee.id || (user as any)?.id === employee.id) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openEditProfile}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  {t.employee.editProfile}
+                </Button>
+              )}
+
+              {user?.role === Role.ADMIN && (
                 <Button
                   variant="danger"
                   size="sm"
@@ -305,8 +389,8 @@ export const EmployeeDetailPage: React.FC = () => {
                   <Trash2 className="w-4 h-4 mr-1" />
                   {t.common.delete}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -832,6 +916,104 @@ export const EmployeeDetailPage: React.FC = () => {
               {t.common.cancel}
             </Button>
             <Button type="submit" isLoading={workLoading}>
+              {t.common.save}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* 基本情報編集モーダル */}
+      <Dialog
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        title={t.employee.editProfileTitle}
+      >
+        <form onSubmit={handleProfileSubmit} className="space-y-4">
+          {profileError && <Alert variant="danger">{profileError}</Alert>}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Input
+                label={t.employee.name}
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Input
+                label={t.employee.nameKana}
+                value={profileForm.nameKana}
+                onChange={(e) => setProfileForm({ ...profileForm, nameKana: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Input
+                label={t.employee.email}
+                type="email"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Input
+                label={t.employee.position}
+                placeholder={t.employee.positionPlaceholder}
+                value={profileForm.position}
+                onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Select
+                label={t.employee.department}
+                value={profileForm.departmentId}
+                onChange={(e) => setProfileForm({ ...profileForm, departmentId: e.target.value })}
+                options={departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))}
+              />
+            </div>
+
+            {user?.role === Role.ADMIN ? (
+              <div>
+                <Select
+                  label={t.employee.role}
+                  value={profileForm.role}
+                  onChange={(e) => setProfileForm({ ...profileForm, role: e.target.value as Role })}
+                  options={[
+                    { value: Role.ADMIN, label: `${t.roles.ADMIN} (ADMIN)` },
+                    { value: Role.DEPARTMENT_MANAGER, label: `${t.roles.DEPARTMENT_MANAGER} (DEPARTMENT_MANAGER)` },
+                    { value: Role.GENERAL, label: `${t.roles.GENERAL} (GENERAL)` }
+                  ]}
+                />
+              </div>
+            ) : <div />}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {t.employee.notes}
+            </label>
+            <textarea
+              rows={3}
+              value={profileForm.notes}
+              onChange={(e) => setProfileForm({ ...profileForm, notes: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder={t.employee.notesPlaceholder}
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={() => setIsEditProfileOpen(false)}>
+              {t.common.cancel}
+            </Button>
+            <Button type="submit" isLoading={profileLoading}>
               {t.common.save}
             </Button>
           </div>

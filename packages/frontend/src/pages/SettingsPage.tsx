@@ -29,11 +29,11 @@ export const SettingsPage: React.FC = () => {
     setPwdError(null);
 
     if (newPassword.length < 8) {
-      setPwdError('新しいパスワードは8文字以上で入力してください。');
+      setPwdError(t.settings.passwordMinLength);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPwdError('確認用パスワードが一致しません。');
+      setPwdError(t.settings.passwordMismatch);
       return;
     }
 
@@ -51,7 +51,7 @@ export const SettingsPage: React.FC = () => {
       if (err instanceof ApiError) {
         setPwdError(err.message);
       } else {
-        setPwdError('パスワードの変更に失敗しました。');
+        setPwdError(t.common.error);
       }
     } finally {
       setPwdLoading(false);
@@ -63,7 +63,7 @@ export const SettingsPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.settings.title}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          言語設定、表示テーマ、セキュリティ設定の管理
+          {t.settings.subtitle}
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export const SettingsPage: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Globe className="w-4 h-4 text-indigo-600" />
-              <span>表示・地域設定</span>
+              <span>{t.settings.displaySection}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

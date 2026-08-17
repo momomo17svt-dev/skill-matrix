@@ -382,11 +382,8 @@ export class EmployeeService {
       throw AppError.notFound('社員が見つかりません。');
     }
 
-    // GENERAL本人の場合の更新制限（社員番号、所属部署、システム権限等の変更不可）
+    // GENERAL本人の場合の更新制限（システム権限の自己昇格は不可）
     if (user.role === Role.GENERAL && user.employeeId === id) {
-      if (departmentId && departmentId !== current.departmentId) {
-        throw AppError.forbidden('一般ユーザーは所属部署を変更できません。');
-      }
       if (role && role !== current.role) {
         throw AppError.forbidden('一般ユーザーはシステム権限を変更できません。');
       }

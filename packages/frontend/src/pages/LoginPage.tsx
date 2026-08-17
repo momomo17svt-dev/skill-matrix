@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
             SkillMatrix
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            システム開発部署向け人材管理システム
+            {t.auth.subTitle}
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export const LoginPage: React.FC = () => {
               type="text"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
-              placeholder="社員番号またはログインID"
+              placeholder={t.auth.loginId}
               required
             />
           </div>
@@ -87,7 +87,7 @@ export const LoginPage: React.FC = () => {
 
         <div className="text-center pt-2">
           <p className="text-xs text-slate-400">
-            完全オフライン対応 / セキュアセッション運用
+            {t.common.appName} - {t.auth.subTitle}
           </p>
         </div>
       </div>

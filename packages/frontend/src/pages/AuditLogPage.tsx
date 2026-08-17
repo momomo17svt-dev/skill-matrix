@@ -48,7 +48,7 @@ export const AuditLogPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.audit.title}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          システム内のすべての変更操作・ログイン履歴（不変ログ）
+          {t.audit.subtitle}
         </p>
       </div>
 
@@ -69,13 +69,13 @@ export const AuditLogPage: React.FC = () => {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
-                    読み込み中...
+                    {t.common.loading}
                   </td>
                 </tr>
               ) : data.items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
-                    監査ログはありません。
+                    {t.audit.noLogs}
                   </td>
                 </tr>
               ) : (
@@ -98,7 +98,7 @@ export const AuditLogPage: React.FC = () => {
                       {(log.beforeJson || log.afterJson) && (
                         <Button variant="ghost" size="sm" onClick={() => setSelectedLog(log)}>
                           <Eye className="w-3.5 h-3.5 mr-1" />
-                          差分
+                          {t.common.details}
                         </Button>
                       )}
                     </td>
@@ -113,7 +113,7 @@ export const AuditLogPage: React.FC = () => {
         {data.pagination.totalPages > 1 && (
           <div className="px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <span className="text-xs text-slate-500">
-              全 {data.pagination.total} 件
+              {data.pagination.total} {t.common.recordsCount}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -121,6 +121,7 @@ export const AuditLogPage: React.FC = () => {
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
+                title={t.common.previous}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -132,6 +133,7 @@ export const AuditLogPage: React.FC = () => {
                 size="sm"
                 disabled={!data.pagination.hasMore}
                 onClick={() => setPage(page + 1)}
+                title={t.common.next}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -144,22 +146,22 @@ export const AuditLogPage: React.FC = () => {
       <Dialog
         isOpen={Boolean(selectedLog)}
         onClose={() => setSelectedLog(null)}
-        title="監査ログ詳細 (変更スナップショット)"
+        title={t.audit.changes}
         maxWidth="2xl"
       >
         {selectedLog && (
           <div className="space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-2 text-slate-500 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
-              <div>操作者: {selectedLog.actorName}</div>
-              <div>日時: {new Date(selectedLog.timestamp).toLocaleString()}</div>
-              <div>アクション: {selectedLog.action}</div>
-              <div>対象: {selectedLog.targetName || selectedLog.targetId}</div>
-              <div className="col-span-2">Request ID: {selectedLog.requestId || '-'}</div>
+              <div>{t.audit.actor}: {selectedLog.actorName}</div>
+              <div>{t.audit.timestamp}: {new Date(selectedLog.timestamp).toLocaleString()}</div>
+              <div>{t.audit.action}: {selectedLog.action}</div>
+              <div>{t.audit.target}: {selectedLog.targetName || selectedLog.targetId}</div>
+              <div className="col-span-2">{t.audit.requestId}: {selectedLog.requestId || '-'}</div>
             </div>
 
             {selectedLog.beforeJson && (
               <div>
-                <h5 className="font-semibold text-slate-700 dark:text-slate-300 mb-1">変更前 (Before)</h5>
+                <h5 className="font-semibold text-slate-700 dark:text-slate-300 mb-1">Before</h5>
                 <pre className="p-3 bg-slate-900 text-slate-100 rounded-lg overflow-x-auto font-mono text-[11px]">
                   {JSON.stringify(JSON.parse(selectedLog.beforeJson), null, 2)}
                 </pre>
@@ -168,7 +170,7 @@ export const AuditLogPage: React.FC = () => {
 
             {selectedLog.afterJson && (
               <div>
-                <h5 className="font-semibold text-slate-700 dark:text-slate-300 mb-1">変更後 (After)</h5>
+                <h5 className="font-semibold text-slate-700 dark:text-slate-300 mb-1">After</h5>
                 <pre className="p-3 bg-slate-900 text-slate-100 rounded-lg overflow-x-auto font-mono text-[11px]">
                   {JSON.stringify(JSON.parse(selectedLog.afterJson), null, 2)}
                 </pre>

@@ -49,6 +49,14 @@ export function createApp() {
         ) {
           return origin;
         }
+        // LAN/VPN: リクエストの Host ヘッダーと Origin のホストが一致する場合は同一ホストアクセスとして許可
+        try {
+          const originUrl = new URL(origin);
+          const requestHost = c.req.header('host') || '';
+          if (originUrl.host === requestHost) {
+            return origin;
+          }
+        } catch {}
         return config.clientOrigin;
       },
       credentials: true,

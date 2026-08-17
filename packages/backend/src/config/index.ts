@@ -33,7 +33,9 @@ export const config = {
     secret: process.env.SESSION_SECRET || 'skillmatrix-dev-session-secret-key-32chars!!',
     expiresInHours: parseInt(process.env.SESSION_EXPIRES_IN_HOURS || '24', 10),
     cookieName: 'skillmatrix_session',
-    secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production'
+    secure: process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production'
   },
   auth: {
     maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),

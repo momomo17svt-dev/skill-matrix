@@ -37,7 +37,7 @@ authRoutes.post('/login', async (c) => {
   const cookieStr = cookie.serialize(config.session.cookieName, token, {
     httpOnly: true,
     secure: config.session.secure,
-    sameSite: 'lax',
+    ...(config.session.secure ? { sameSite: 'lax' as const } : {}),
     path: '/',
     maxAge: config.session.expiresInHours * 3600
   });
@@ -47,6 +47,7 @@ authRoutes.post('/login', async (c) => {
   return c.json({
     success: true,
     data: {
+      token,
       user,
       isInitialPassword
     }

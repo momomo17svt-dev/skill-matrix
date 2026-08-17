@@ -22,11 +22,17 @@ export const csrfMiddleware = () =>
       try {
         const originUrl = new URL(origin);
         const expectedOriginUrl = new URL(config.clientOrigin);
-        // ホスト名が一致するか（またはlocalhost/開発中）
+        const requestHost = c.req.header('host') || '';
+
+        // 許可条件:
+        // 1. clientOrigin と一致
+        // 2. localhost / 127.0.0.1 からのアクセス
+        // 3. リクエストの Host ヘッダーと Origin のホストが一致（同一ホストアクセス = LAN等）
         if (
           originUrl.host !== expectedOriginUrl.host &&
           !originUrl.host.startsWith('localhost:') &&
-          !originUrl.host.startsWith('127.0.0.1:')
+          !originUrl.host.startsWith('127.0.0.1:') &&
+          originUrl.host !== requestHost
         ) {
           throw AppError.forbidden('CSRF 検証に失敗しました (Invalid Origin)。');
         }

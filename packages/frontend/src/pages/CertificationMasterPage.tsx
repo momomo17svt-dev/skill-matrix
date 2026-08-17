@@ -53,16 +53,16 @@ export const CertificationMasterPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.nav.certMaster}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.certMaster.title}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            全社共通の資格マスタの管理（選択肢として利用）
+            {t.certMaster.subtitle}
           </p>
         </div>
 
         {user?.role === Role.ADMIN && (
           <Button onClick={() => setIsOpen(true)} className="flex items-center gap-1.5">
             <Plus className="w-4 h-4" />
-            <span>資格マスタを追加</span>
+            <span>{t.certMaster.addMaster}</span>
           </Button>
         )}
       </div>
@@ -72,22 +72,22 @@ export const CertificationMasterPage: React.FC = () => {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <tr>
-                <th className="px-6 py-3.5">資格名</th>
-                <th className="px-6 py-3.5">発行機関</th>
-                <th className="px-6 py-3.5">カテゴリ</th>
+                <th className="px-6 py-3.5">{t.certMaster.name}</th>
+                <th className="px-6 py-3.5">{t.certMaster.issuer}</th>
+                <th className="px-6 py-3.5">{t.certMaster.category}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {loading ? (
                 <tr>
                   <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
-                    読み込み中...
+                    {t.common.loading}
                   </td>
                 </tr>
               ) : masters.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
-                    登録されている資格マスタはありません。
+                    {t.certMaster.noMasters}
                   </td>
                 </tr>
               ) : (
@@ -107,25 +107,25 @@ export const CertificationMasterPage: React.FC = () => {
         </div>
       </Card>
 
-      <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} title="資格マスタ新規作成">
+      <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} title={t.certMaster.addMaster}>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <Alert variant="danger">{error}</Alert>}
           <Input
-            label="資格名"
+            label={t.certMaster.name}
             required
-            placeholder="AWS 認定ソリューションアーキテクト"
+            placeholder="AWS Certified Solutions Architect"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <Input
-            label="発行機関"
-            placeholder="Amazon Web Services, IPA 等"
+            label={t.certMaster.issuer}
+            placeholder="Amazon Web Services, etc."
             value={form.issuer}
             onChange={(e) => setForm({ ...form, issuer: e.target.value })}
           />
           <Input
-            label="カテゴリ"
-            placeholder="Cloud, Database, Security 等"
+            label={t.certMaster.category}
+            placeholder="Cloud, Database, Security, etc."
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
           />

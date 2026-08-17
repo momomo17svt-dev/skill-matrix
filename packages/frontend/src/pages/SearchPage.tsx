@@ -107,7 +107,7 @@ export const SearchPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.search.title}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          スキル評価・実務経験年数（重複期間除外）・保有資格を複合した高精度な人材検索
+          {t.search.subtitle}
         </p>
       </div>
 
@@ -124,23 +124,23 @@ export const SearchPage: React.FC = () => {
             {/* 基本属性 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
-                label="氏名・カナ"
-                placeholder="山田 太郎"
+                label={t.search.nameKanaLabel}
+                placeholder={t.search.nameKanaPlaceholder}
                 value={filter.name}
                 onChange={(e) => setFilter({ ...filter, name: e.target.value })}
               />
               <Input
-                label="社員番号"
+                label={t.employee.number}
                 placeholder="EMP001"
                 value={filter.employeeNumber}
                 onChange={(e) => setFilter({ ...filter, employeeNumber: e.target.value })}
               />
               <Select
-                label="部署"
+                label={t.employee.department}
                 value={filter.departmentId}
                 onChange={(e) => setFilter({ ...filter, departmentId: e.target.value })}
               >
-                <option value="">すべての部署</option>
+                <option value="">{t.common.allDepartments}</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -157,27 +157,27 @@ export const SearchPage: React.FC = () => {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
-                  label="スキル名 (部分一致)"
-                  placeholder="C#, React, AWS 等"
+                  label={t.skills.skillName}
+                  placeholder={t.search.skillPlaceholder}
                   value={filter.skillName}
                   onChange={(e) => setFilter({ ...filter, skillName: e.target.value })}
                 />
                 <Select
-                  label="自己評価レベル"
+                  label={t.skills.selfLevel}
                   value={filter.selfLevel}
                   onChange={(e) => setFilter({ ...filter, selfLevel: e.target.value as SkillLevel })}
                 >
-                  <option value="">指定なし</option>
+                  <option value="">{t.common.unspecified}</option>
                   <option value={SkillLevel.A}>{t.skillLevels.A}</option>
                   <option value={SkillLevel.B}>{t.skillLevels.B}</option>
                   <option value={SkillLevel.C}>{t.skillLevels.C}</option>
                 </Select>
                 <Select
-                  label="所属長評価レベル"
+                  label={t.skills.managerLevel}
                   value={filter.managerLevel}
                   onChange={(e) => setFilter({ ...filter, managerLevel: e.target.value as SkillLevel })}
                 >
-                  <option value="">指定なし</option>
+                  <option value="">{t.common.unspecified}</option>
                   <option value={SkillLevel.A}>{t.skillLevels.A}</option>
                   <option value={SkillLevel.B}>{t.skillLevels.B}</option>
                   <option value={SkillLevel.C}>{t.skillLevels.C}</option>
@@ -188,25 +188,25 @@ export const SearchPage: React.FC = () => {
             {/* 実務経験 & 資格条件 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
-                label="使用技術 (実務案件)"
-                placeholder="Java, Python, Docker 等"
+                label={t.search.technology}
+                placeholder={t.search.technologyPlaceholder}
                 value={filter.usedTechnology}
                 onChange={(e) => setFilter({ ...filter, usedTechnology: e.target.value })}
               />
               <Input
-                label="通算実務経験年数以上 (年)"
+                label={t.search.minExperience}
                 type="number"
                 min={0}
                 step={0.5}
-                placeholder="例: 3"
+                placeholder={t.search.minExperiencePlaceholder}
                 value={filter.minExperienceYears === '' ? '' : String(filter.minExperienceYears)}
                 onChange={(e) =>
                   setFilter({ ...filter, minExperienceYears: e.target.value ? Number(e.target.value) : '' })
                 }
               />
               <Input
-                label="保有資格名 (部分一致)"
-                placeholder="AWS, 応用情報, データベース 等"
+                label={t.certifications.certName}
+                placeholder={t.search.certPlaceholder}
                 value={filter.certificationName}
                 onChange={(e) => setFilter({ ...filter, certificationName: e.target.value })}
               />
@@ -231,7 +231,7 @@ export const SearchPage: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>
-              {t.search.results} ({results.pagination.total} 件)
+              {t.search.results} ({results.pagination.total} {t.common.recordsCount})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -261,7 +261,7 @@ export const SearchPage: React.FC = () => {
                               key={idx}
                               className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium"
                             >
-                              {ms.skillName}: 自己[{ms.selfLevel}] / 上長[{ms.managerLevel}]
+                              {ms.skillName}: {t.skills.selfLevel}[{ms.selfLevel}] / {t.skills.managerLevel}[{ms.managerLevel}]
                             </span>
                           ))}
                         </div>
@@ -272,13 +272,13 @@ export const SearchPage: React.FC = () => {
                         {emp.experienceFormatted && (
                           <span className="flex items-center gap-1">
                             <Briefcase className="w-3.5 h-3.5" />
-                            実稼働経験: <strong className="text-slate-700 dark:text-slate-300">{emp.experienceFormatted}</strong>
+                            {t.search.actualExp}: <strong className="text-slate-700 dark:text-slate-300">{emp.experienceFormatted}</strong>
                           </span>
                         )}
                         {emp.matchedCertifications && emp.matchedCertifications.length > 0 && (
                           <span className="flex items-center gap-1">
                             <Award className="w-3.5 h-3.5" />
-                            資格: {emp.matchedCertifications.join(', ')}
+                            {t.search.certs}: {emp.matchedCertifications.join(', ')}
                           </span>
                         )}
                       </div>
@@ -286,7 +286,7 @@ export const SearchPage: React.FC = () => {
 
                     <div className="shrink-0 flex items-center gap-2">
                       <Button variant="ghost" size="sm">
-                        <span>詳細</span>
+                        <span>{t.common.details}</span>
                         <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>

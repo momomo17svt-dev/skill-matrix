@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { AuthSessionUser } from '@skillmatrix/shared';
-import { api, ApiError } from '../services/api.js';
+import { api, ApiError, setAuthToken, clearAuthToken } from '../services/api.js';
 
 interface AuthContextType {
   user: AuthSessionUser | null;
   loading: boolean;
   isInitialPassword: boolean;
   login: (loginId: string, password: string) => Promise<void>;
+  loginWithIdentityPlatform: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setIsInitialPassword: (val: boolean) => void;
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       setUser(null);
       setIsInitialPassword(false);
+      clearAuthToken();
     } finally {
       setLoading(false);
     }
@@ -37,12 +39,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshUser]);
 
   const login = async (loginId: string, password: string) => {
-    const res = await api.post<{ user: AuthSessionUser; isInitialPassword: boolean }>('/api/v1/auth/login', {
+    const res = await api.post<{ token?: string; user: AuthSessionUser; isInitialPassword: boolean }>('/api/v1/auth/login', {
       loginId,
       password
     });
+    if (res.token) {
+      setAuthToken(res.token);
+    }
     setUser(res.user);
     setIsInitialPassword(Boolean(res.isInitialPassword));
+  };
+
+  const loginWithIdentityPlatform = async (loginId: string, password: string) => {
+    const res = await api.post<{ token?: string; user: AuthSessionUser; isInitialPassword: boolean }>('/api/v1/auth/identity-login', {
+      loginId,
+      password
+    });
+    if (res.token) {
+      setAuthToken(res.token);
+    }
+    setUser(res.user);
+    setIsInitialPassword(false);
   };
 
   const logout = async () => {
@@ -51,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      clearAuthToken();
       setUser(null);
       setIsInitialPassword(false);
     }
@@ -63,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isInitialPassword,
         login,
+        loginWithIdentityPlatform,
         logout,
         refreshUser,
         setIsInitialPassword

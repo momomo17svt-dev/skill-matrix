@@ -26,7 +26,14 @@ export const en = {
     no: 'No',
     unknown: 'Unknown',
     all: 'All',
-    none: 'None'
+    none: 'None',
+    allDepartments: 'All Departments',
+    allStatuses: 'All Statuses',
+    unspecified: 'Unspecified',
+    recordsCount: 'records',
+    showingRange: 'Showing {from} - {to} of {total} records',
+    previous: 'Previous',
+    next: 'Next'
   },
   auth: {
     login: 'Login',
@@ -45,7 +52,8 @@ export const en = {
     accountLocked: 'Account is locked. Please try again after 15 minutes.',
     invalidCredentials: 'Invalid login ID or password.',
     unauthorized: 'Authentication required.',
-    forbidden: 'Access forbidden.'
+    forbidden: 'Access forbidden.',
+    subTitle: 'Engineering Talent & Skill Management System'
   },
   roles: {
     ADMIN: 'Administrator',
@@ -58,7 +66,7 @@ export const en = {
     RETIRED: 'Retired'
   },
   skillLevels: {
-    A: 'A: Expert / Can Train Others',
+    A: 'A: Expert / Train Others',
     B: 'B: Proficient / Independent',
     C: 'C: Intermediate / With Guidance',
     UNEVALUATED: 'Unevaluated'
@@ -75,6 +83,7 @@ export const en = {
   },
   dashboard: {
     title: 'Dashboard',
+    subtitle: 'Statistical analysis of talent skills, certifications, and evaluation gaps across the organization',
     totalEmployees: 'Total Employees',
     departments: 'Departments',
     certifications: 'Total Certifications',
@@ -86,14 +95,18 @@ export const en = {
     recentUpdates: 'Recently Updated Employees',
     gapSelfHigher: 'Self Higher',
     gapEqual: 'Equal',
-    gapManagerHigher: 'Manager Higher'
+    gapManagerHigher: 'Manager Higher',
+    noData: 'No data available to display.'
   },
   employee: {
     listTitle: 'Employees',
+    subtitle: 'Search and manage engineers and employees in the organization',
     detailTitle: 'Employee Details',
-    createTitle: 'New Employee',
+    createTitle: 'Create Employee',
     editTitle: 'Edit Employee',
-    number: 'Employee Number',
+    editProfile: 'Edit Profile',
+    editProfileTitle: 'Edit Basic Profile',
+    number: 'Employee No.',
     name: 'Name',
     nameKana: 'Name Kana',
     email: 'Email',
@@ -102,11 +115,17 @@ export const en = {
     role: 'System Role',
     hireDate: 'Hire Date',
     status: 'Status',
+    notes: 'Notes / Bio',
+    notesPlaceholder: 'Areas of expertise, notes, etc.',
+    positionPlaceholder: 'e.g. Senior Engineer, Tech Lead, Manager',
+    searchPlaceholder: 'Name, Kana, Employee No, Email',
     certificationsTab: 'Certifications',
     workHistoriesTab: 'Work History',
-    skillsTab: 'Skill Matrix',
+    skillsTab: 'Skills Matrix',
     historyTab: 'Evaluation History',
-    deleteConfirm: 'Are you sure you want to delete this employee? All associated certifications, work history, and evaluation records will be permanently deleted.'
+    deleteConfirm: 'Are you sure you want to delete this employee? All related certifications, work history, and evaluations will be permanently deleted.',
+    notFound: 'No employees found.',
+    totalCount: 'Total {count} employees'
   },
   skills: {
     title: 'Skills Management',
@@ -117,11 +136,17 @@ export const en = {
     selfEvaluatedAt: 'Self Evaluated At',
     managerEvaluatedAt: 'Manager Evaluated At',
     evaluator: 'Evaluator',
-    reason: 'Reason / Comment',
-    historyTitle: 'Evaluation History',
+    reason: 'Evaluation Reason / Comment',
+    historyTitle: 'Skill Evaluation History',
     updateSelfEval: 'Update Self Evaluation',
     updateManagerEval: 'Update Manager Evaluation',
-    noSkills: 'No skills defined for this department.'
+    noSkills: 'No skills defined.',
+    addCategory: 'Add Category',
+    addSkill: 'Add Skill',
+    levelA_desc: 'A: Expert (Can teach/lead others)',
+    levelB_desc: 'B: Proficient (Can complete tasks autonomously)',
+    levelC_desc: 'C: Intermediate (Can perform tasks under guidance)',
+    unevaluated_desc: 'Unevaluated'
   },
   certifications: {
     title: 'Certifications',
@@ -130,11 +155,12 @@ export const en = {
     issuer: 'Issuer',
     acquiredDate: 'Acquired Date',
     expirationDate: 'Expiration Date',
-    certNumber: 'Certificate Number',
-    attachment: 'Proof / Certificate Document',
+    certNumber: 'Certification No.',
+    attachment: 'Certificate File',
     uploadPrompt: 'Drag & drop or select PDF, PNG, JPG (Max 10MB)',
     download: 'Download',
-    noCerts: 'No certifications registered.'
+    noCerts: 'No certifications registered.',
+    deleteConfirm: 'Are you sure you want to delete this certification? The attachment file will also be deleted.'
   },
   workHistory: {
     title: 'Work History',
@@ -143,41 +169,86 @@ export const en = {
     description: 'Description',
     role: 'Role',
     period: 'Period',
-    startYearMonth: 'Start Year-Month (YYYY-MM)',
-    endYearMonth: 'End Year-Month (YYYY-MM)',
-    isCurrent: 'Currently Ongoing',
-    usedSkills: 'Used Skills / Technologies',
-    totalExperience: 'Total Experience (Union Merged)',
-    noWork: 'No work histories registered.'
+    startYearMonth: 'Start (YYYY-MM)',
+    endYearMonth: 'End (YYYY-MM)',
+    isCurrent: 'Current Project',
+    usedSkills: 'Technologies / Skills',
+    usedSkillsPlaceholder: 'C#, React, TypeScript, PostgreSQL, etc.',
+    totalExperience: 'Total Experience (Deduplicated)',
+    noWork: 'No work history registered.',
+    deleteConfirm: 'Are you sure you want to delete this work history record?'
   },
   search: {
     title: 'Talent Search',
+    subtitle: 'High-precision talent search by skills, deduplicated experience years, and certifications',
     conditions: 'Search Criteria',
-    results: 'Results',
+    results: 'Search Results',
     skillCondition: 'Skill & Evaluation Criteria',
     certCondition: 'Certification Criteria',
     workCondition: 'Work Experience Criteria',
-    minExperience: 'Min Experience Years',
-    technology: 'Used Technology (Partial Match)',
-    includeSubDepts: 'Include Sub-departments',
-    noResults: 'No employees matched the specified criteria.'
+    minExperience: 'Min Work Experience (Years)',
+    minExperiencePlaceholder: 'e.g. 3',
+    technology: 'Used Technology (Projects)',
+    technologyPlaceholder: 'Java, Python, Docker, etc.',
+    certPlaceholder: 'AWS, Database, Scrum, etc.',
+    skillPlaceholder: 'C#, React, AWS, etc.',
+    nameKanaLabel: 'Name / Kana',
+    nameKanaPlaceholder: 'Taro Yamada',
+    includeSubDepts: 'Include Sub-Departments',
+    noResults: 'No employees matched the criteria.',
+    matchedSkills: 'Matched Skills',
+    matchedCertsAndExp: 'Matched Certs & Experience',
+    actualExp: 'Work Experience',
+    certs: 'Certifications'
+  },
+  department: {
+    title: 'Organization & Departments',
+    subtitle: 'Department hierarchy tree and departmental skill definitions',
+    addRoot: 'Add Root Department',
+    addChild: 'Add Sub-Department',
+    addCategory: 'Add Category',
+    addSkill: 'Add Skill',
+    code: 'Department Code',
+    name: 'Department Name',
+    deleteConfirm: 'Are you sure you want to delete this department? Sub-departments and skill definitions will also be deleted.',
+    noDepartments: 'No departments registered.'
+  },
+  certMaster: {
+    title: 'Certifications Master',
+    subtitle: 'Management of internal and official certification masters',
+    addMaster: 'Add Master',
+    category: 'Category',
+    name: 'Certification Name',
+    issuer: 'Issuer',
+    difficulty: 'Difficulty',
+    noMasters: 'No certification masters registered.'
   },
   audit: {
     title: 'Audit Logs',
+    subtitle: 'Immutable record of all system operations, role changes, and data updates',
     timestamp: 'Timestamp',
     actor: 'Actor',
     action: 'Action',
     target: 'Target',
     ip: 'IP Address',
     requestId: 'Request ID',
-    changes: 'Changes (Before / After)'
+    changes: 'Diff (Before / After)',
+    noLogs: 'No audit logs found.'
   },
   settings: {
     title: 'Settings',
+    subtitle: 'Manage display language, color theme, and security settings',
+    displaySection: 'Display & Region',
     language: 'Language',
     theme: 'Theme',
     themeLight: 'Light Mode',
     themeDark: 'Dark Mode',
-    themeSystem: 'Follow System'
+    themeSystem: 'System Default',
+    securitySection: 'Security & Password',
+    currentPasswordLabel: 'Current Password',
+    newPasswordLabel: 'New Password',
+    confirmPasswordLabel: 'Confirm New Password',
+    passwordMinLength: 'New password must be at least 8 characters.',
+    passwordMismatch: 'Passwords do not match.'
   }
 };

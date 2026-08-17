@@ -57,8 +57,8 @@ export const DashboardPage: React.FC = () => {
   // Recharts 用データ整形
   const skillChartData = stats.skillLevelDistribution.map((item) => ({
     name: item.level,
-    自己評価: item.selfCount,
-    上長評価: item.managerCount
+    [t.skills.selfLevel]: item.selfCount,
+    [t.skills.managerLevel]: item.managerCount
   }));
 
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
@@ -68,7 +68,7 @@ export const DashboardPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t.dashboard.title}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          システム開発組織の人材・スキル・資格の現状集計
+          {t.dashboard.subtitle}
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t.dashboard.totalEmployees}</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.totalEmployees} 名</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.totalEmployees}</h3>
             </div>
           </CardContent>
         </Card>
@@ -93,7 +93,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t.dashboard.departments}</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.departmentCount} 組織</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.departmentCount}</h3>
             </div>
           </CardContent>
         </Card>
@@ -105,7 +105,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t.dashboard.certifications}</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.certificationsCount} 件</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.certificationsCount}</h3>
             </div>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{t.dashboard.unevaluatedSkills}</p>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.unevaluatedSkillsCount} 件</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.unevaluatedSkillsCount}</h3>
             </div>
           </CardContent>
         </Card>
@@ -138,8 +138,8 @@ export const DashboardPage: React.FC = () => {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="自己評価" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="上長評価" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={t.skills.selfLevel} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={t.skills.managerLevel} fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -160,7 +160,7 @@ export const DashboardPage: React.FC = () => {
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  label={(entry) => `${entry.gap}: ${entry.count}件`}
+                  label={(entry) => `${entry.gap}: ${entry.count}`}
                 >
                   {stats.evaluationGapDistribution.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -190,45 +190,96 @@ export const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* 資格保有トップ & 最近更新 */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.dashboard.certDistribution}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {stats.certificationsDistribution.map((c, idx) => (
-                <div key={idx} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                  <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[280px]">
-                    {c.name}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                    {c.count} 名
-                  </span>
+        {/* 資格保有状況 (円グラフ & 一覧) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.dashboard.certDistribution}</CardTitle>
+          </CardHeader>
+          <CardContent className="h-80">
+            {stats.certificationsDistribution && stats.certificationsDistribution.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full items-center">
+                <div className="h-full w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stats.certificationsDistribution}
+                        dataKey="count"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={75}
+                        paddingAngle={3}
+                      >
+                        {stats.certificationsDistribution.map((_, index) => (
+                          <Cell key={`cert-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any, name: any) => [`${value}`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.dashboard.recentUpdates}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2.5">
-              {stats.recentUpdatedEmployees.map((e) => (
-                <div key={e.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                  <div>
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">{e.name}</span>
-                    <span className="text-slate-400 ml-2">({e.employeeNumber})</span>
-                    <p className="text-slate-500 dark:text-slate-400">{e.departmentName}</p>
-                  </div>
-                  <span className="text-slate-400">{new Date(e.updatedAt).toLocaleDateString()}</span>
+                <div className="space-y-2 overflow-y-auto max-h-64 pr-2">
+                  {stats.certificationsDistribution.map((c, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80"
+                    >
+                      <div className="flex items-center gap-2 truncate max-w-[180px]">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                        />
+                        <span className="font-medium text-slate-700 dark:text-slate-300 truncate" title={c.name}>
+                          {c.name}
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
+                        {c.count}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-slate-400">
+                資格保有データがありません
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* 最近更新された社員 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-500" />
+            <span>{t.dashboard.recentUpdates}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.recentUpdatedEmployees.map((e) => (
+              <div
+                key={e.id}
+                className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{e.name}</span>
+                  <span className="text-xs text-slate-400">{e.employeeNumber}</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{e.departmentName}</p>
+                <p className="text-[11px] text-slate-400 mt-2 text-right">
+                  {new Date(e.updatedAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
