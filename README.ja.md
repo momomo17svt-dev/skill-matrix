@@ -45,7 +45,6 @@ skill-matrix/
 
 ### 前提条件
 - Node.js v20 LTS
-- Node.js v20 LTS
 - Docker / Docker Desktop または PostgreSQL 16
 - Windows PowerShell / Bash
 

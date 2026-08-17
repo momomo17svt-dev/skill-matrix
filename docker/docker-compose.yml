@@ -1,7 +1,8 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: skillmatrix_db
+    container_name: skill-matrix-db
+    pull_policy: if_not_present
     restart: always
     environment:
       POSTGRES_DB: skillmatrix
@@ -20,7 +21,10 @@ services:
 
   app:
     image: skillmatrix-app:latest
-    container_name: skillmatrix_app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: skill-matrix-app
     restart: always
     depends_on:
       db:
